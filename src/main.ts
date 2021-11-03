@@ -38,6 +38,7 @@ client.on('messageCreate', async (message) => {
   }
   await translate(message.content, 'en', 'ja')
     .then((result) => {
+      console.log("Result: " + result)
       if (result === null) {
         return
       }
