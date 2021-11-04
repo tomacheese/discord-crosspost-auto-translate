@@ -7,13 +7,16 @@ async function translate(
   before = 'en',
   after = 'ja'
 ): Promise<string | null> {
+  console.log("translate()")
   const GASUrl = config.get('GASUrl')
-  const response = await axios.get(
-    `${GASUrl}?text=${encodeURI(message)}&before=${before}&after=${after}`
-  )
+  const url = `${GASUrl}?text=${encodeURI(message)}&before=${before}&after=${after}`
+  console.log("translate url: " + url)
+  const response = await axios.get(url)
   if (response.status !== 200) {
     return null
   }
+  console.log(response)
+  console.log(response.data)
   return response.data.response.result
 }
 
