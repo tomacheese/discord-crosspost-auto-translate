@@ -7,13 +7,25 @@ async function translate(
   before = 'en',
   after = 'ja'
 ): Promise<string | null> {
-  const GASUrl = config.get('GASUrl')
-  const response = await axios.get(
-    `${GASUrl}?text=${encodeURI(message)}&before=${before}&after=${after}`
+  const GASUrl = config.get('GASUrl') as string
+  const response = await axios.post(
+    GASUrl,
+    {
+      before,
+      after,
+      text: message,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    }
   )
   if (response.status !== 200) {
     return null
   }
+  console.log(response.data)
   return response.data.response.result
 }
 
@@ -36,9 +48,12 @@ client.on('messageCreate', async (message) => {
   if (message.author.id === client.user?.id) {
     return // 自分自身
   }
-  await translate(message.content, 'en', 'ja')
+  await translate(message.content, 'auto', 'ja')
     .then((result) => {
       if (result === null) {
+        return
+      }
+      if (message.content === result) {
         return
       }
       message.reply(result)
