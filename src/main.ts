@@ -50,6 +50,7 @@ client.on('messageCreate', async (message) => {
   }
   await translate(message.content, 'auto', 'ja')
     .then((result) => {
+      console.log("Result: " + result)
       if (result === null) {
         return
       }
