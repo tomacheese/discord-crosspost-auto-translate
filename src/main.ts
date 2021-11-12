@@ -2,6 +2,13 @@ import axios from 'axios'
 import config from 'config'
 import { Client, Intents, MessageFlags, TextChannel } from 'discord.js'
 
+function escape(text: string): string {
+  return text.replaceAll(/https?:\/\/[^\s]+/g, '<span translate="no">$&</span>')
+}
+function unescape(text: string): string {
+  return text.replaceAll(/<span translate="no">([^<]+)<\/span>/g, '$1')
+}
+
 async function translate(
   message: string,
   before = 'en',
@@ -14,6 +21,7 @@ async function translate(
       before,
       after,
       text: message,
+      mode: 'html',
     },
     {
       headers: {
@@ -48,12 +56,13 @@ client.on('messageCreate', async (message) => {
   if (message.author.id === client.user?.id) {
     return // 自分自身
   }
-  await translate(message.content, 'auto', 'ja')
+  await translate(escape(message.content), 'auto', 'ja')
     .then((result) => {
-      console.log("Result: " + result)
+      console.log('Result: ' + result)
       if (result === null) {
         return
       }
+      result = unescape(result)
       if (message.content === result) {
         return
       }
