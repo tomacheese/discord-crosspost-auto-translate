@@ -3,10 +3,40 @@ import config from 'config'
 import { Client, Intents, MessageFlags, TextChannel } from 'discord.js'
 
 function escape(text: string): string {
-  return text.replaceAll(/https?:\/\/[^\s]+/g, '<span translate="no">$&</span>')
+  return text
+    .replaceAll(
+      /https?:\/\/[^\s]+/g,
+      '<span translate="no" data-type="url">$&</span>'
+    )
+    .replaceAll(
+      /```([\s\S\n]+?)```/g,
+      '<span translate="no" data-type="code-block">$1</span>'
+    )
+    .replaceAll(
+      /`([\s\S\n]+?)`/g,
+      '<span translate="no" data-type="code">$1</span>'
+    )
+    .replaceAll(
+      /<[@#at:]\S+>/g,
+      '<span translate="no" data-type="formatting">$&</span>'
+    )
+    .replaceAll(/\*\*/g, '<span translate="no" data-type="strong">**</span>')
 }
 function unescape(text: string): string {
-  return text.replaceAll(/<span translate="no">([^<]+)<\/span>/g, '$1')
+  return text
+    .replaceAll(/<span translate="no" data-type="url">([^<]+)<\/span>/g, '$1')
+    .replaceAll(
+      /<span translate="no" data-type="code-block">([^<]+)<\/span>/g,
+      '```$1```'
+    )
+    .replaceAll(
+      /<span translate="no" data-type="formatting">([^<]+)<\/span>/g,
+      '$1'
+    )
+    .replaceAll(
+      /<span translate="no" data-type="strong">([^<]+)<\/span>/g,
+      '$1'
+    )
 }
 
 async function translate(
@@ -55,6 +85,9 @@ client.on('messageCreate', async (message) => {
   }
   if (message.author.id === client.user?.id) {
     return // 自分自身
+  }
+  if (message.content.length === 0) {
+    return // 空文字列
   }
   await translate(escape(message.content), 'auto', 'ja')
     .then((result) => {
