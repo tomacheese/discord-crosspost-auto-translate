@@ -38,7 +38,7 @@ function doPost(e) {
   return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
 }
 
-function unescape() {
+function unescape(target) {
   if (typeof target !== 'string') return target;
 
   const patterns = {
