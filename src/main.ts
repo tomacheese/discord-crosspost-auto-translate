@@ -26,15 +26,15 @@ function unescape(text: string): string {
   return text
     .replaceAll(/<span translate="no" data-type="url">([^<]+)<\/span>/g, '$1')
     .replaceAll(
-      /<span translate="no" data-type="code-block">([^<]+)<\/span>/g,
+      /<span translate="no" data-type="code-block">([\s\S\n]+?)<\/span>/g,
       '```$1```'
     )
     .replaceAll(
-      /<span translate="no" data-type="formatting">([^<]+)<\/span>/g,
+      /<span translate="no" data-type="formatting">([\s\S\n]+?)<\/span>/g,
       '$1'
     )
     .replaceAll(
-      /<span translate="no" data-type="strong">([^<]+)<\/span>/g,
+      /<span translate="no" data-type="strong">([\s\S\n]+?)<\/span>/g,
       '$1'
     )
 }
