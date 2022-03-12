@@ -30,6 +30,10 @@ function unescape(text: string): string {
       '```$1```'
     )
     .replaceAll(
+      /<span translate="no" data-type="code">([\s\S\n]+?)<\/span>/g,
+      '`$1`'
+    )
+    .replaceAll(
       /<span translate="no" data-type="formatting">([\s\S\n]+?)<\/span>/g,
       '$1'
     )
