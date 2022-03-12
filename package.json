@@ -1,6 +1,6 @@
 {
   "name": "discord-crosspost-auto-translate",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Automatically translates and replies to cross-posted messages.",
   "main": "dist/main.js",
   "repository": "git@github.com:book000/discord-crosspost-auto-translate.git",
