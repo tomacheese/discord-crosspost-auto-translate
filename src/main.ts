@@ -1,52 +1,61 @@
 import axios from 'axios'
 import config from 'config'
-import { Client, Intents, MessageFlags, TextChannel } from 'discord.js'
+import {
+  Client,
+  GatewayIntentBits,
+  MessageFlags,
+  TextChannel,
+} from 'discord.js'
 
 function escape(text: string): string {
   return text
     .replaceAll(
-      /https?:\/\/[^\s]+/g,
-      '<span translate="no" data-type="url">$&</span>'
+      /<https?:\/\/[^\s]+>/g,
+      '<span translate="no" data-type="url">$&</span>',
+    )
+    .replaceAll(
+      /[^<]https?:\/\/[^\s]+/g,
+      '<span translate="no" data-type="url">$&</span>',
     )
     .replaceAll(
       /```([\s\S\n]+?)```/g,
-      '<span translate="no" data-type="code-block">$1</span>'
+      '<span translate="no" data-type="code-block">$1</span>',
     )
     .replaceAll(
       /`([\s\S\n]+?)`/g,
-      '<span translate="no" data-type="code">$1</span>'
+      '<span translate="no" data-type="code">$1</span>',
     )
     .replaceAll(
       /<[@#at:]\S+>/g,
-      '<span translate="no" data-type="formatting">$&</span>'
+      '<span translate="no" data-type="formatting">$&</span>',
     )
     .replaceAll(/\*\*/g, '<span translate="no" data-type="strong">**</span>')
 }
 function unescape(text: string): string {
   return text
-    .replaceAll(/<span translate="no" data-type="url">([^<]+)<\/span>/g, '$1')
+    .replaceAll(/<span translate="no" data-type="url">([^<]+)<\/span>/g, '<$1>')
     .replaceAll(
       /<span translate="no" data-type="code-block">([\s\S\n]+?)<\/span>/g,
-      '```$1```'
+      '```$1```',
     )
     .replaceAll(
       /<span translate="no" data-type="code">([\s\S\n]+?)<\/span>/g,
-      '`$1`'
+      '`$1`',
     )
     .replaceAll(
       /<span translate="no" data-type="formatting">([\s\S\n]+?)<\/span>/g,
-      '$1'
+      '$1',
     )
     .replaceAll(
       /<span translate="no" data-type="strong">([\s\S\n]+?)<\/span>/g,
-      '$1'
+      '$1',
     )
 }
 
 async function translate(
   message: string,
   before = 'en',
-  after = 'ja'
+  after = 'ja',
 ): Promise<string | null> {
   const GASUrl = config.get('GASUrl') as string
   const response = await axios.post(
@@ -62,7 +71,7 @@ async function translate(
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
       },
-    }
+    },
   )
   if (response.status !== 200) {
     return null
@@ -72,7 +81,11 @@ async function translate(
 }
 
 const client = new Client({
-  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
 })
 
 client.on('ready', async () => {
@@ -83,7 +96,7 @@ client.on('messageCreate', async (message) => {
   if (!(message.channel instanceof TextChannel)) {
     return // テキストチャンネルのメッセージではない
   }
-  if (!message.flags.has(MessageFlags.FLAGS.IS_CROSSPOST)) {
+  if (!message.flags.has(MessageFlags.Crossposted)) {
     // フォローメッセージではない
     return
   }
