@@ -14,11 +14,7 @@ export class Discord {
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
       ],
-      partials: [
-        Partials.Message,
-        Partials.Channel,
-        Partials.User,
-      ]
+      partials: [Partials.Message, Partials.Channel, Partials.User],
     })
     this.client.on('ready', this.onReady.bind(this))
 
