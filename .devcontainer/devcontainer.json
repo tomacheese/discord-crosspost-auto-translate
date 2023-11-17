@@ -1,0 +1,45 @@
+{
+  "otherPortAttributes": {
+    "onAutoForward": "silent"
+  },
+  "name": "discord-crosspost-auto-translate",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:0-18",
+  "waitFor": "postCreateCommand",
+  "customizations": {
+    "settings": {
+      "git.branchProtection": [
+        "main",
+        "master"
+      ],
+      "editor.formatOnSave": true,
+      "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": false
+        }
+      }
+    },
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "git.branchProtection": [
+          "main",
+          "master"
+        ],
+        "editor.formatOnSave": true,
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": false
+          }
+        }
+      }
+    },
+    "extensions": [
+      "esbenp.prettier-vscode"
+    ]
+  },
+  "postCreateCommand": "pnpm install"
+}
