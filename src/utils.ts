@@ -190,7 +190,7 @@ export const Utils = {
       }
 
       // 現在のチャンクに行を追加
-      currentChunk.push(line)
+      currentChunk.push(line.trim())
     }
 
     // ループ終了後、最後のチャンクが残っていれば保存
