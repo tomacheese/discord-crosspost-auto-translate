@@ -50,17 +50,6 @@ export class Discord {
     logger.info(`👌 ready: ${this.client.user?.tag}`)
   }
 
-  getStackTraceTypeScriptFiles(stack: string) {
-    const lines = stack.split('\n')
-    const typescriptFiles = lines
-      .filter((line) => line.trim().startsWith('at ') && line.includes('.ts:'))
-      .map((line) => {
-        return line.trim().slice(3)
-      })
-
-    return typescriptFiles
-  }
-
   waitReady() {
     return new Promise<void>((resolve) => {
       if (this.client.isReady()) {
