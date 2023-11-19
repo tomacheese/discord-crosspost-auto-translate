@@ -33,7 +33,7 @@ jobs:
     with:
       targets: >-
         [
-          { imageName: "book000/discord-crosspost-auto-translate", context: ".", file: "Dockerfile", packageName: "discord-crosspost-auto-translate" }
+          { imageName: "tomacheese/discord-crosspost-auto-translate", context: ".", file: "Dockerfile", packageName: "discord-crosspost-auto-translate" }
         ]
     secrets:
       DOCKER_USERNAME: ${{ github.actor }}
