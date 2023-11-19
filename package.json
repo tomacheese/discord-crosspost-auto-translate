@@ -2,9 +2,9 @@
   "name": "discord-crosspost-auto-translate",
   "version": "2.0.0",
   "description": "Automatically translates and replies to cross-posted messages.",
-  "homepage": "https://github.com/book000/discord-crosspost-auto-translate",
+  "homepage": "https://github.com/tomacheese/discord-crosspost-auto-translate",
   "bugs": {
-    "url": "https://github.com/book000/discord-crosspost-auto-translate/issues"
+    "url": "https://github.com/tomacheese/discord-crosspost-auto-translate/issues"
   },
   "license": "MIT",
   "author": "Tomachi <tomachi@tomacheese.com>",
@@ -12,7 +12,7 @@
   "main": "dist/main.js",
   "repository": {
     "type": "git",
-    "url": "git@github.com:book000/discord-crosspost-auto-translate.git"
+    "url": "git@github.com:tomacheese/discord-crosspost-auto-translate.git"
   },
   "scripts": {
     "lint:prettier": "prettier --check src",
