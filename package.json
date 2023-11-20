@@ -47,7 +47,7 @@
     "run-z": "2.0.0",
     "ts-jest": "29.1.1",
     "tsx": "4.1.4",
-    "typescript": "5.2.2"
+    "typescript": "5.3.2"
   },
   "packageManager": "pnpm@8.10.5",
   "jest": {
