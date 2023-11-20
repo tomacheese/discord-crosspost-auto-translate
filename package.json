@@ -27,7 +27,7 @@
     "fix": "run-z fix:prettier fix:eslint"
   },
   "devDependencies": {
-    "@book000/node-utils": "1.10.2",
+    "@book000/node-utils": "1.10.3",
     "@types/jest": "29.5.8",
     "@types/node": "20.9.2",
     "@typescript-eslint/eslint-plugin": "6.11.0",
