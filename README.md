@@ -7,6 +7,7 @@ Automatically translates and replies to cross-posted messages.
 - Native Node.js or Docker
 - Google App Script
   - The script in [gas-script.js](gas-script.js) must be installed and deployed as a web app.
+- Vaild Discord bot & token
 
 ### Setup gas-script.js
 
@@ -35,7 +36,7 @@ services:
     restart: always
 ```
 
-After that, you can start it with `docker compose up -d` after creating a configuration file with reference to [Configuration section](#configuration).
+You can then refer to the [configuration section](#configuration) to create a configuration file and then launch it with `docker compose up -d`.
 
 ### Native Node.js
 
