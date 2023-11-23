@@ -4,7 +4,7 @@ Automatically translates and replies to cross-posted messages.
 
 ## Requirements
 
-- Node.js or Docker
+- Native Node.js or Docker
 - Google App Script
   - The script in [gas-script.js](gas-script.js) must be installed and deployed as a web app.
 
@@ -37,7 +37,7 @@ services:
 
 After that, you can start it with `docker compose up -d` after creating a configuration file with reference to [Configuration section](#configuration).
 
-### Node.js
+### Native Node.js
 
 If running in a Node.js environment, the version specified in [.node-version](.node-version) is recommended.
 
