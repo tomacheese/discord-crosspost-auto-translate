@@ -99,6 +99,10 @@ export const Utils = {
           /<span translate="no" data-type="formatting">(<\d+:\S+>)<\/span>/g,
           '$1'
         )
+        // 各行の前後にスペースがある場合は削除
+        .split('\n')
+        .map((line) => line.trim())
+        .join('\n')
     )
   },
   /**
@@ -190,7 +194,7 @@ export const Utils = {
       }
 
       // 現在のチャンクに行を追加
-      currentChunk.push(line.trim())
+      currentChunk.push(line)
     }
 
     // ループ終了後、最後のチャンクが残っていれば保存
