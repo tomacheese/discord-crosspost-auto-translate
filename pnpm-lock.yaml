@@ -24,8 +24,8 @@ devDependencies:
     specifier: 0.38.1
     version: 0.38.1
   axios:
-    specifier: 1.6.4
-    version: 1.6.4
+    specifier: 1.6.5
+    version: 1.6.5
   discord.js:
     specifier: 14.14.1
     version: 14.14.1
@@ -1581,16 +1581,6 @@ packages:
   /available-typed-arrays@1.0.5:
     resolution: {integrity: sha512-DMD0KiN46eipeziST1LPP/STfDU0sufISXmjSgvVsoU2tqxctQeASejWcfNtxYKqETM1UxQ8sp2OrSBWpHY6sw==}
     engines: {node: '>= 0.4'}
-    dev: true
-
-  /axios@1.6.4:
-    resolution: {integrity: sha512-heJnIs6N4aa1eSthhN9M5ioILu8Wi8vmQW9iHQ9NUvfkJb0lEEDUiIdQNAuBtfUt3FxReaKdpQA5DbmMOqzF/A==}
-    dependencies:
-      follow-redirects: 1.15.4
-      form-data: 4.0.0
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
     dev: true
 
   /axios@1.6.5:
