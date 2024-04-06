@@ -32,7 +32,7 @@
     "generate-schema": "typescript-json-schema --required src/config.ts ConfigInterface -o schema/Configuration.json"
   },
   "devDependencies": {
-    "@book000/node-utils": "1.12.113",
+    "@book000/node-utils": "1.12.114",
     "@types/jest": "29.5.12",
     "@types/node": "20.12.4",
     "@typescript-eslint/eslint-plugin": "7.5.0",
