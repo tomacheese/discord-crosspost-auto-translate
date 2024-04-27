@@ -1,6 +1,12 @@
 import { Logger } from '@book000/node-utils'
 import axios from 'axios'
 
+interface TranslateResponse {
+  response: {
+    result: string
+  }
+}
+
 export const Utils = {
   /**
    * テキストをエスケープするメソッド。MarkdownおよびDiscordのフォーマットをエスケープします。
@@ -123,7 +129,7 @@ export const Utils = {
     const logger = Logger.configure('Utils.translate')
 
     // Google Apps Scriptサービスに翻訳リクエストを送信
-    const response = await axios.post(
+    const response = await axios.post<TranslateResponse>(
       gasUrl,
       {
         before,

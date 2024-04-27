@@ -2,7 +2,7 @@ function doPost(e) {
   let parameter = {}
   try {
     parameter = JSON.parse(e.postData.contents)
-  } catch (e) {
+  } catch {
     return ContentService.createTextOutput({
       status: false,
       result: 'Invalid JSON',
@@ -22,14 +22,16 @@ function doPost(e) {
     if (mode == 'text') {
       text = LanguageApp.translate(parameter.text, before, after)
     } else {
-      const temp = parameter.text.replaceAll('\n', '<br>')
-      text = LanguageApp.translate(temp, before, after, { contentType: 'html' })
+      const temporary = parameter.text.replaceAll('\n', '<br>')
+      text = LanguageApp.translate(temporary, before, after, {
+        contentType: 'html',
+      })
       text = text.replaceAll('<br>', '\n')
       text = unescape(text)
     }
     status = true
-  } catch (e) {
-    text = '' + e
+  } catch (error) {
+    text = '' + error
     status = false
   }
   const result = {}
@@ -56,7 +58,7 @@ function unescape(target) {
     '&#x60;': '`',
   }
 
-  return target.replace(/&(lt|gt|amp|quot|#x27|#x60);/g, function (match) {
+  return target.replaceAll(/&(lt|gt|amp|quot|#x27|#x60);/g, function (match) {
     return patterns[match]
   })
 }

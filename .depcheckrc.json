@@ -4,6 +4,10 @@
     "@types/node",
     "run-z",
     "rimraf",
-    "typescript-json-schema"
+    "typescript-json-schema",
+    "eslint-config-standard",
+    "eslint-plugin-import",
+    "eslint-plugin-n",
+    "eslint-plugin-promise"
   ]
 }

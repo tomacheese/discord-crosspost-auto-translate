@@ -154,16 +154,18 @@ export class EventHandler {
    * @returns リプライメッセージの配列（削除されている場合は null が配列要素に入る）
    */
   private getReplies(message: Message): Promise<(Message | null)[]> {
-    const path = process.env.REPLIES_MESSAGE_PATH || 'data/replies.json'
+    const path = process.env.REPLIES_MESSAGE_PATH ?? 'data/replies.json'
 
     if (!fs.existsSync(path)) {
       // ファイルが存在しない場合は空の配列を返す
       return Promise.resolve([])
     }
 
-    const data = JSON.parse(fs.readFileSync(path, 'utf8'))
+    const data: Record<string, string[]> = JSON.parse(
+      fs.readFileSync(path, 'utf8')
+    )
 
-    const replyIds = data[message.id] || []
+    const replyIds = data[message.id] ?? []
     const replyPromises = replyIds.map(async (id: string) => {
       return await message.channel.messages.fetch(id).catch(() => null)
     })
@@ -177,9 +179,9 @@ export class EventHandler {
    * @param replies リプライメッセージの配列
    */
   private saveReplies(message: Message, replies: Message[]) {
-    const path = process.env.REPLIES_MESSAGE_PATH || 'data/replies.json'
+    const path = process.env.REPLIES_MESSAGE_PATH ?? 'data/replies.json'
 
-    const data = fs.existsSync(path)
+    const data: Record<string, string[]> = fs.existsSync(path)
       ? JSON.parse(fs.readFileSync(path, 'utf8'))
       : {}
 
