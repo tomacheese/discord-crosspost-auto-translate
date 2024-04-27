@@ -12,9 +12,7 @@ export interface ConfigInterface {
 }
 
 export class Configuration extends ConfigFramework<ConfigInterface> {
-  protected validates(): {
-    [key: string]: (config: ConfigInterface) => boolean
-  } {
+  protected validates(): Record<string, (config: ConfigInterface) => boolean> {
     return {
       'discord is required': (config) => !!config.discord,
       'discord.token is required': (config) => !!config.discord.token,
@@ -26,9 +24,11 @@ export class Configuration extends ConfigFramework<ConfigInterface> {
         typeof config.translate.gasUrl === 'string',
       'translate.fromLanguage must be a string': (config) =>
         typeof config.translate.fromLanguage === 'string' ||
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         config.translate.fromLanguage === undefined,
       'translate.toLanguage must be a string': (config) =>
         typeof config.translate.toLanguage === 'string' ||
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         config.translate.toLanguage === undefined,
     }
   }
