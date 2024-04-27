@@ -1,8 +1,8 @@
 import eslintConfig from '@book000/eslint-config'
 
 export default [
-  eslintConfig,
+  ...eslintConfig,
   {
-    ignores: 'gas-script.js',
+    ignores: ['gas-script.js'],
   },
 ]
