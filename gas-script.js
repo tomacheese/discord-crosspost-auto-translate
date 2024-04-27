@@ -23,7 +23,9 @@ function doPost(e) {
       text = LanguageApp.translate(parameter.text, before, after)
     } else {
       const temporary = parameter.text.replaceAll('\n', '<br>')
-      text = LanguageApp.translate(temporary, before, after, { contentType: 'html' })
+      text = LanguageApp.translate(temporary, before, after, {
+        contentType: 'html',
+      })
       text = text.replaceAll('<br>', '\n')
       text = unescape(text)
     }
