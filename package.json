@@ -38,7 +38,7 @@
     "@types/node": "20.12.8",
     "@vercel/ncc": "0.38.1",
     "axios": "1.6.8",
-    "discord.js": "14.14.1",
+    "discord.js": "14.15.2",
     "eslint": "9.2.0",
     "eslint-config-standard": "17.1.0",
     "eslint-plugin-import": "2.29.1",
@@ -50,7 +50,7 @@
     "rimraf": "5.0.5",
     "run-z": "2.0.0",
     "ts-jest": "29.1.2",
-    "tsx": "4.9.2",
+    "tsx": "4.9.3",
     "typescript": "5.4.5",
     "typescript-json-schema": "0.63.0"
   },
