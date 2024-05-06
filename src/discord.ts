@@ -8,6 +8,7 @@ export class Discord {
   public readonly client: Client
 
   constructor(config: Configuration) {
+    const logger = Logger.configure('Discord.constructor')
     this.client = new Client({
       intents: [
         GatewayIntentBits.Guilds,
@@ -19,14 +20,18 @@ export class Discord {
     this.client.on('ready', this.onReady.bind(this))
 
     const eventHandler = new EventHandler(this.client, config)
-    this.client.on(
-      'messageCreate',
-      eventHandler.onMessageCreate.bind(eventHandler)
-    )
-    this.client.on(
-      'messageUpdate',
-      eventHandler.onMessageUpdate.bind(eventHandler)
-    )
+    this.client.on('messageCreate', (message) => {
+      eventHandler.onMessageCreate(message).catch((error: unknown) => {
+        logger.error('Failed to process message', error as Error)
+      })
+    })
+    this.client.on('messageUpdate', (oldMessage, newMessage) => {
+      eventHandler
+        .onMessageUpdate(oldMessage, newMessage)
+        .catch((error: unknown) => {
+          logger.error('Failed to process message update', error as Error)
+        })
+    })
 
     this.client.login(config.get('discord').token).catch((error: unknown) => {
       Logger.configure('Discord').error('Failed to login', error as Error)
