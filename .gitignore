@@ -131,3 +131,5 @@ dist
 
 data
 output
+
+.pnpm-store/

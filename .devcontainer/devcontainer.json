@@ -1,10 +1,16 @@
 {
-  "otherPortAttributes": {
-    "onAutoForward": "silent"
-  },
   "name": "discord-crosspost-auto-translate",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:1-18",
+  "remoteUser": "node",
+  "otherPortsAttributes": {
+    "onAutoForward": "silent"
+  },
+  "postCreateCommand": "sudo npm uninstall -g pnpm yarn && sudo git config --system --add safe.directory ${containerWorkspaceFolder} && sudo chown node node_modules .pnpm-store && sudo corepack enable && corepack install && pnpm install",
   "waitFor": "postCreateCommand",
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
+    "source=pnpm-store,target=${containerWorkspaceFolder}/.pnpm-store,type=volume"
+  ],
   "customizations": {
     "settings": {
       "git.branchProtection": [
@@ -40,6 +46,5 @@
     "extensions": [
       "esbenp.prettier-vscode"
     ]
-  },
-  "postCreateCommand": "pnpm install"
+  }
 }
