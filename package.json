@@ -52,7 +52,7 @@
     "ts-jest": "29.2.4",
     "tsx": "4.17.0",
     "typescript": "5.4.5",
-    "typescript-json-schema": "0.64.0"
+    "typescript-json-schema": "0.65.1"
   },
   "jest": {
     "setupFilesAfterEnv": [
