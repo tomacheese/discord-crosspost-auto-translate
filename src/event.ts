@@ -1,10 +1,10 @@
 import {
   Client,
+  GuildTextBasedChannel,
   Message,
   MessageFlags,
   PartialMessage,
   PermissionFlagsBits,
-  TextBasedChannel,
 } from 'discord.js'
 import { Configuration } from './config'
 import { Logger } from '@book000/node-utils'
@@ -25,7 +25,7 @@ export class EventHandler {
    *
    * @param message メッセージ
    */
-  public async onMessageCreate(message: Message | PartialMessage) {
+  public async onMessageCreate(message: Message<true> | PartialMessage) {
     await this.processMessage(message)
   }
 
@@ -36,8 +36,8 @@ export class EventHandler {
    * @param newMessage 新メッセージ
    */
   public async onMessageUpdate(
-    _oldMessage: Message | PartialMessage,
-    newMessage: Message | PartialMessage
+    _oldMessage: Message<true> | PartialMessage,
+    newMessage: Message<true> | PartialMessage
   ) {
     await this.processMessage(newMessage)
   }
@@ -47,12 +47,16 @@ export class EventHandler {
    *
    * @param message メッセージ
    */
-  private async processMessage(message: Message | PartialMessage) {
+  private async processMessage(message: Message<true> | PartialMessage) {
     const logger = Logger.configure('Discord.processMessage')
 
     // メッセージがpartialの場合は詳細を取得
     if (message.partial) {
-      message = await message.fetch()
+      const messageTemp = await message.fetch()
+      if (!messageTemp.inGuild()) {
+        return
+      }
+      message = messageTemp
     }
     // チャンネルがテキストベースのチャンネルかつ、Guildチャンネルでない場合は無視
     if (!message.channel.isTextBased() || !message.inGuild()) {
@@ -153,7 +157,9 @@ export class EventHandler {
    * @param message メッセージ
    * @returns リプライメッセージの配列（削除されている場合は null が配列要素に入る）
    */
-  private getReplies(message: Message): Promise<(Message | null)[]> {
+  private getReplies(
+    message: Message<true>
+  ): Promise<(Message<true> | null)[]> {
     const path = process.env.REPLIES_MESSAGE_PATH ?? 'data/replies.json'
 
     if (!fs.existsSync(path)) {
@@ -178,7 +184,7 @@ export class EventHandler {
    * @param message メッセージ
    * @param replies リプライメッセージの配列
    */
-  private saveReplies(message: Message, replies: Message[]) {
+  private saveReplies(message: Message<true>, replies: Message<true>[]) {
     const path = process.env.REPLIES_MESSAGE_PATH ?? 'data/replies.json'
 
     const data: Record<string, string[]> = fs.existsSync(path)
@@ -196,7 +202,9 @@ export class EventHandler {
    * @param channel チャンネル
    * @param messageIds メッセージID
    */
-  private async deleteMessagesIfAlreadyDeleted(messages: (Message | null)[]) {
+  private async deleteMessagesIfAlreadyDeleted(
+    messages: (Message<true> | null)[]
+  ) {
     // 一つでもメッセージが存在しなかったら、すべてのメッセージを削除する
     if (!messages.some((message) => !message)) {
       return false
@@ -225,12 +233,12 @@ export class EventHandler {
    * @returns 編集または新規送信されたメッセージの配列
    */
   private async replaceOrCreateMessage(
-    channel: TextBasedChannel,
-    messages: (Message | null)[],
-    reference: Message,
+    channel: GuildTextBasedChannel,
+    messages: (Message<true> | null)[],
+    reference: Message<true>,
     contents: string[]
-  ) {
-    const promises: Promise<Message>[] = []
+  ): Promise<Message<true>[]> {
+    const promises: Promise<Message<true>>[] = []
     for (const [index, content] of contents.entries()) {
       const message = messages.length > index ? messages[index] : null
       if (message) {

@@ -21,11 +21,17 @@ export class Discord {
 
     const eventHandler = new EventHandler(this.client, config)
     this.client.on('messageCreate', (message) => {
+      if (!message.inGuild()) {
+        return
+      }
       eventHandler.onMessageCreate(message).catch((error: unknown) => {
         logger.error('Failed to process message', error as Error)
       })
     })
     this.client.on('messageUpdate', (oldMessage, newMessage) => {
+      if (!oldMessage.inGuild() || !newMessage.inGuild()) {
+        return
+      }
       eventHandler
         .onMessageUpdate(oldMessage, newMessage)
         .catch((error: unknown) => {
