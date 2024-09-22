@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@book000/eslint-config": "1.7.56",
-    "@book000/node-utils": "1.13.256",
+    "@book000/node-utils": "1.13.257",
     "@types/jest": "29.5.13",
     "@types/node": "22.5.5",
     "@vercel/ncc": "0.38.1",
