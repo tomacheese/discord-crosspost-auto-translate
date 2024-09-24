@@ -36,7 +36,7 @@
     "@book000/node-utils": "1.13.260",
     "@types/jest": "29.5.13",
     "@types/node": "22.6.1",
-    "@vercel/ncc": "0.38.1",
+    "@vercel/ncc": "0.38.2",
     "axios": "1.7.7",
     "discord.js": "14.16.2",
     "eslint": "9.11.0",
