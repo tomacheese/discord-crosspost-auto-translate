@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@book000/eslint-config':
-        specifier: 1.7.108
-        version: 1.7.108(eslint-config-standard@17.1.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.17.0(eslint@9.16.0)(typescript@5.7.2))(eslint@9.16.0))(eslint-plugin-n@17.14.0(eslint@9.16.0))(eslint-plugin-promise@7.2.1(eslint@9.16.0))(eslint@9.16.0))(eslint@9.16.0)(typescript@5.7.2)
+        specifier: 1.7.109
+        version: 1.7.109(eslint-config-standard@17.1.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.17.0(eslint@9.16.0)(typescript@5.7.2))(eslint@9.16.0))(eslint-plugin-n@17.14.0(eslint@9.16.0))(eslint-plugin-promise@7.2.1(eslint@9.16.0))(eslint@9.16.0))(eslint@9.16.0)(typescript@5.7.2)
       '@book000/node-utils':
         specifier: 1.13.386
         version: 1.13.386
@@ -239,8 +239,8 @@ packages:
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
 
-  '@book000/eslint-config@1.7.108':
-    resolution: {integrity: sha512-IB1gL0/gAh1yh1xdMa6DsUH4PBBI/hiL8BbnCunTD8g1xIyI/J1eGvoOYEvrT1JPm3RMqjJUV/nMlDf7ZraLIw==}
+  '@book000/eslint-config@1.7.109':
+    resolution: {integrity: sha512-rDy3PdvD54EwFcSxlpeA4cR729Xohq2kN4wGRJTrf8O+BWZ6MsTU7cr2Q9pwy96xgHrXpeuwWCPJPWX3T1smFw==}
     peerDependencies:
       eslint: 9.16.0
       eslint-config-standard: 17.1.0
@@ -853,9 +853,6 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
-
-  axios@1.7.8:
-    resolution: {integrity: sha512-Uu0wb7KNqK2t5K+YQyVCLM76prD5sRFjKHbJYCP1J7JFGEQ6nN7HWn9+04LAeiJ3ji54lgS/gZCH1oxyrf1SPw==}
 
   axios@1.7.9:
     resolution: {integrity: sha512-LhLcE7Hbiryz8oMDdDptSrWowmB4Bl6RCt6sIJKpRB4XtVf0iEgewX3au/pJqm+Py1kCASkb/FFKjxQaLtxJvw==}
@@ -2945,7 +2942,7 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@book000/eslint-config@1.7.108(eslint-config-standard@17.1.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.17.0(eslint@9.16.0)(typescript@5.7.2))(eslint@9.16.0))(eslint-plugin-n@17.14.0(eslint@9.16.0))(eslint-plugin-promise@7.2.1(eslint@9.16.0))(eslint@9.16.0))(eslint@9.16.0)(typescript@5.7.2)':
+  '@book000/eslint-config@1.7.109(eslint-config-standard@17.1.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.17.0(eslint@9.16.0)(typescript@5.7.2))(eslint@9.16.0))(eslint-plugin-n@17.14.0(eslint@9.16.0))(eslint-plugin-promise@7.2.1(eslint@9.16.0))(eslint@9.16.0))(eslint@9.16.0)(typescript@5.7.2)':
     dependencies:
       '@eslint/eslintrc': 3.2.0
       '@typescript-eslint/parser': 8.17.0(eslint@9.16.0)(typescript@5.7.2)
@@ -3659,14 +3656,6 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.0.0
-
-  axios@1.7.8:
-    dependencies:
-      follow-redirects: 1.15.9
-      form-data: 4.0.1
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
 
   axios@1.7.9:
     dependencies:
