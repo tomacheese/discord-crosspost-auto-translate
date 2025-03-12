@@ -24,8 +24,8 @@ importers:
         specifier: 0.38.3
         version: 0.38.3
       axios:
-        specifier: 1.8.2
-        version: 1.8.2
+        specifier: 1.8.3
+        version: 1.8.3
       discord.js:
         specifier: 14.18.0
         version: 14.18.0
