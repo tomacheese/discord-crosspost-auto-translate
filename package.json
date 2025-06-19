@@ -38,7 +38,7 @@
     "@types/node": "22.15.32",
     "@vercel/ncc": "0.38.3",
     "axios": "1.10.0",
-    "discord.js": "14.19.3",
+    "discord.js": "14.20.0",
     "eslint": "9.29.0",
     "eslint-config-standard": "17.1.0",
     "eslint-plugin-import": "2.31.0",
