@@ -42,3 +42,4 @@ pnpm install
 ## ドキュメント更新
 
 ## リポジトリ固有
+- 目的: Automatically translates and replies to cross-posted messages.

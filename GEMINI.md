@@ -37,3 +37,4 @@ pnpm install
 - 既存のプロジェクトルールがある場合はそれを優先する。
 
 ## リポジトリ固有
+- 目的: Automatically translates and replies to cross-posted messages.
