@@ -25,4 +25,9 @@
 - ログに機密情報を出力しない。
 
 ## リポジトリ固有
-- 目的: Automatically translates and replies to cross-posted messages.
+- 概要: Automatically translates and replies to cross-posted messages.
+- 主要言語: TypeScript
+- パッケージマネージャー: pnpm
+- 主なエントリポイント: `src/main.ts`
+- CI 定義: `.github/workflows/` を参照
+- 実行環境: `Dockerfile` を使用
