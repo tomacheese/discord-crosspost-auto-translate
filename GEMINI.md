@@ -15,7 +15,7 @@
 
 ## プロジェクト概要
 - **目的**: Discord のクロスポストメッセージを自動翻訳する Bot。
-- **技術スタック**: TypeScript, discord.js, pnpm, Jest.
+- **技術スタック**: TypeScript, discord.js, pnpm, Jest
 
 ## コーディング規約
 - **コメント**: 日本語
