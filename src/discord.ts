@@ -40,7 +40,8 @@ export class Discord {
     })
 
     this.client.login(config.get('discord').token).catch((err: unknown) => {
-      Logger.configure('Discord').error('Failed to login', err as Error)
+      // constructor スコープで定義した logger を使用して、ログカテゴリを統一する
+      logger.error('Failed to login', err as Error)
     })
 
     this.config = config
