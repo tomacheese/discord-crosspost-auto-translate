@@ -24,8 +24,8 @@ export class Discord {
       if (!message.inGuild()) {
         return
       }
-      eventHandler.onMessageCreate(message).catch((error: unknown) => {
-        logger.error('Failed to process message', error as Error)
+      eventHandler.onMessageCreate(message).catch((err: unknown) => {
+        logger.error('Failed to process message', err as Error)
       })
     })
     this.client.on('messageUpdate', (oldMessage, newMessage) => {
@@ -34,13 +34,13 @@ export class Discord {
       }
       eventHandler
         .onMessageUpdate(oldMessage, newMessage)
-        .catch((error: unknown) => {
-          logger.error('Failed to process message update', error as Error)
+        .catch((err: unknown) => {
+          logger.error('Failed to process message update', err as Error)
         })
     })
 
-    this.client.login(config.get('discord').token).catch((error: unknown) => {
-      Logger.configure('Discord').error('Failed to login', error as Error)
+    this.client.login(config.get('discord').token).catch((err: unknown) => {
+      Logger.configure('Discord').error('Failed to login', err as Error)
     })
 
     this.config = config
