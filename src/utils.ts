@@ -1,5 +1,4 @@
 import { Logger } from '@book000/node-utils'
-// axios import removed (migrated to fetch)
 
 interface TranslateResponse {
   response: {
@@ -128,27 +127,33 @@ export const Utils = {
   ): Promise<string | null> {
     const logger = Logger.configure('Utils.translate')
 
-    // Google Apps Scriptサービスに翻訳リクエストを送信
-    // fetch で GAS へ POST
-    const res = await fetch(gasUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: JSON.stringify({
-        before,
-        after,
-        text: message,
-        mode: 'html',
-      }),
-    })
-    if (!res.ok) {
-      logger.warn(`❌ メッセージの翻訳に失敗しました：${res.status}`)
+    try {
+      // Google Apps Scriptサービスに翻訳リクエストを送信
+      const res = await fetch(gasUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({
+          before,
+          after,
+          text: message,
+          mode: 'html',
+        }),
+      })
+      if (!res.ok) {
+        logger.warn(`❌ メッセージの翻訳に失敗しました：${res.status}`)
+        return null
+      }
+      const data = (await res.json()) as TranslateResponse
+      return data.response.result
+    } catch (error) {
+      logger.warn(
+        `❌ メッセージの翻訳中にエラーが発生しました：${String(error)}`
+      )
       return null
     }
-    const data = (await res.json()) as TranslateResponse
-    return data.response.result
   },
   /**
    * 改行されたテキストを指定された文字数制限内で分割する
