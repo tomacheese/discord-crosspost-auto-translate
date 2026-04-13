@@ -1,5 +1,5 @@
 import { Utils } from './utils'
-import axios from 'axios'
+// axios import removed (migrated to fetch)
 
 describe('Utils', () => {
   describe('escape', () => {
@@ -120,14 +120,15 @@ describe('Utils', () => {
       const message = 'Hello, world!'
       const translatedMessage = 'こんにちは、世界！'
 
-      // Mock the axios.post method to return the translated message
-      jest.spyOn(axios, 'post').mockResolvedValueOnce({
+      // Mock fetch to return the translated message
+      globalThis.fetch = jest.fn().mockResolvedValueOnce({
+        ok: true,
         status: 200,
-        data: {
+        json: async () => ({
           response: {
             result: translatedMessage,
           },
-        },
+        }),
       })
 
       const result = await Utils.translate(gasUrl, message)
@@ -138,9 +139,11 @@ describe('Utils', () => {
       const gasUrl = 'https://example.com/translate'
       const message = 'Hello, world!'
 
-      // Mock the axios.post method to return an error response
-      jest.spyOn(axios, 'post').mockResolvedValueOnce({
+      // Mock fetch to return an error response
+      globalThis.fetch = jest.fn().mockResolvedValueOnce({
+        ok: false,
         status: 500,
+        json: async () => ({}),
       })
 
       const result = await Utils.translate(gasUrl, message)
