@@ -1,5 +1,4 @@
 import { Logger } from '@book000/node-utils'
-import axios from 'axios'
 
 interface TranslateResponse {
   response: {
@@ -128,31 +127,33 @@ export const Utils = {
   ): Promise<string | null> {
     const logger = Logger.configure('Utils.translate')
 
-    // Google Apps Scriptサービスに翻訳リクエストを送信
-    const response = await axios.post<TranslateResponse>(
-      gasUrl,
-      {
-        before,
-        after,
-        text: message,
-        mode: 'html',
-      },
-      {
+    try {
+      // Google Apps Scriptサービスに翻訳リクエストを送信
+      const res = await fetch(gasUrl, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
         },
+        body: JSON.stringify({
+          before,
+          after,
+          text: message,
+          mode: 'html',
+        }),
+      })
+      if (!res.ok) {
+        logger.warn(`❌ メッセージの翻訳に失敗しました：${res.status}`)
+        return null
       }
-    )
-
-    // レスポンスのステータスに応じて、翻訳が成功したかどうかを確認
-    if (response.status !== 200) {
-      logger.warn(`❌ メッセージの翻訳に失敗しました：${response.status}`)
+      const data = (await res.json()) as TranslateResponse
+      return data.response.result
+    } catch (error) {
+      logger.warn(
+        `❌ メッセージの翻訳中にエラーが発生しました：${String(error)}`
+      )
       return null
     }
-
-    // レスポンスから翻訳されたメッセージを返す
-    return response.data.response.result
   },
   /**
    * 改行されたテキストを指定された文字数制限内で分割する
