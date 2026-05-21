@@ -66,8 +66,8 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
       typescript-json-schema:
-        specifier: 0.67.3
-        version: 0.67.3
+        specifier: 0.67.4
+        version: 0.67.4
 
 packages:
 
@@ -2838,8 +2838,8 @@ packages:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
       typescript: '>=4.8.4 <6.1.0'
 
-  typescript-json-schema@0.67.3:
-    resolution: {integrity: sha512-QGOi/rZgbo9pDl1G+s3WFHiJZi4vj6zHHfQpxA00J3I7p0VC+JjYgX70NiuZu2liXF3YtSErv5C3ZRKtQSwhoQ==}
+  typescript-json-schema@0.67.4:
+    resolution: {integrity: sha512-BhDCVfwGtPKKt9JOBvh6ocmSbEk7ftx7dpqqIpvGNrjzYcUKm8pnYwKSFfNJwqcp/qNTfZr9sKtVyTxx4V9iRA==}
     hasBin: true
 
   typescript@5.9.3:
@@ -6322,7 +6322,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  typescript-json-schema@0.67.3:
+  typescript-json-schema@0.67.4:
     dependencies:
       '@types/json-schema': 7.0.15
       '@types/node': 24.12.4
