@@ -7,6 +7,7 @@
     "lib": ["ESNext", "esnext.AsyncIterable"],
     "outDir": "./dist",
     "rootDir": "./src",
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "removeComments": true,
     "esModuleInterop": true,
     "allowJs": true,
