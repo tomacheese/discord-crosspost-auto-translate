@@ -24,7 +24,8 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "experimentalDecorators": true,
-    "newLine": "LF"
+    "newLine": "LF",
+    "types": ["node", "jest"]
   },
   "include": ["src/**/*"]
 }
