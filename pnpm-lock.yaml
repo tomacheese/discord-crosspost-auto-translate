@@ -21,8 +21,8 @@ importers:
         specifier: 24.13.2
         version: 24.13.2
       '@vercel/ncc':
-        specifier: 0.44.0
-        version: 0.44.0
+        specifier: 0.44.1
+        version: 0.44.1
       discord.js:
         specifier: 14.26.4
         version: 14.26.4
@@ -953,8 +953,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@vercel/ncc@0.44.0':
-    resolution: {integrity: sha512-pHyI+bZokSgIscTKFSmpNk5vZzmOrb9RW0Vu4SRyqUvkJ0kgg3PzaZLLDVTFXhbUiCqg0/Eu8L4fKtgViA92kg==}
+  '@vercel/ncc@0.44.1':
+    resolution: {integrity: sha512-cUjIE5P2YY1n+Kt9rFIazMMpGoPn1Fic04rOmTkElMkiDP5oszGfERMpo2shVkFKDL7rVppdM2pqJKC59shQWQ==}
     hasBin: true
 
   '@vladfrangu/async_event_emitter@2.4.7':
@@ -3983,7 +3983,7 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
     optional: true
 
-  '@vercel/ncc@0.44.0': {}
+  '@vercel/ncc@0.44.1': {}
 
   '@vladfrangu/async_event_emitter@2.4.7': {}
 
