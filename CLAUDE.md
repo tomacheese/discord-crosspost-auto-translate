@@ -34,6 +34,10 @@
 - TypeScript の `skipLibCheck` は有効にしない。
 - 公開関数やインターフェースには日本語で JSDoc を記載する。
 
+## セキュリティ / 機密情報
+- Discord トークン等の機密情報は Git にコミットしない。設定は `data/config.json` (環境変数 `CONFIG_FILE` / `CONFIG_PATH` で上書き可) で管理する。
+- ログに機密情報を出力しない。
+
 ## 開発コマンド
 ```bash
 # 依存関係のインストール
@@ -87,5 +91,7 @@ pnpm fix
 - [ ] Copilot レビュー等に対応した
 
 ## リポジトリ固有
-- 翻訳には `gas-script.js` を GAS にデプロイして使用する必要がある。
-- テストは Jest を使用しており、`utils.test.ts` にユーティリティのテストがある。
+- `src/event.ts` の `onMessageCreate` 周りがメッセージ検知・翻訳の主要ロジック。
+- 翻訳は `src/utils.ts` から GAS Web App を `fetch` で呼び出して行う。
+- `gas-script.js` は外部サービス (GAS) 側のコードであり、本リポジトリの Node.js 環境では動作しない。利用時は GAS にデプロイし、Web App の URL を設定に指定する。
+- テストは Jest を使用しており、`src/utils.test.ts` にユーティリティのテストがある。
