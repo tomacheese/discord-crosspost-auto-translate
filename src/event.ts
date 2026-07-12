@@ -142,7 +142,7 @@ export class EventHandler {
     // 不要なメッセージを削除
     const deleteMessages = replies.filter(
       (reply) =>
-        reply && !newMessages.some((message) => message.id === reply.id)
+        reply && newMessages.every((message) => message.id !== reply.id)
     )
     const deletePromises = deleteMessages.map(async (reply) => {
       if (!reply) return
@@ -206,7 +206,7 @@ export class EventHandler {
     messages: (Message<true> | null)[]
   ) {
     // 一つでもメッセージが存在しなかったら、すべてのメッセージを削除する
-    if (!messages.some((message) => !message)) {
+    if (messages.every(Boolean)) {
       return false
     }
 
