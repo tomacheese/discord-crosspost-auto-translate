@@ -6,7 +6,7 @@ interface TranslateResponse {
   }
 }
 
-export const Utils = {
+export const Utilities = {
   /**
    * テキストをエスケープするメソッド。MarkdownおよびDiscordのフォーマットをエスケープします。
    *
@@ -125,11 +125,11 @@ export const Utils = {
     before = 'en',
     after = 'ja'
   ): Promise<string | null> {
-    const logger = Logger.configure('Utils.translate')
+    const logger = Logger.configure('Utilities.translate')
 
     try {
       // Google Apps Scriptサービスに翻訳リクエストを送信
-      const res = await fetch(gasUrl, {
+      const response = await fetch(gasUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,11 +142,11 @@ export const Utils = {
           mode: 'html',
         }),
       })
-      if (!res.ok) {
-        logger.warn(`❌ メッセージの翻訳に失敗しました：${res.status}`)
+      if (!response.ok) {
+        logger.warn(`❌ メッセージの翻訳に失敗しました：${response.status}`)
         return null
       }
-      const data = (await res.json()) as TranslateResponse
+      const data = (await response.json()) as TranslateResponse
       return data.response.result
     } catch (error) {
       logger.warn(

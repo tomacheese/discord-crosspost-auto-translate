@@ -6,16 +6,16 @@ import {
   PartialMessage,
   PermissionFlagsBits,
 } from 'discord.js'
-import { Configuration } from './config'
+import { Config } from './config'
 import { Logger } from '@book000/node-utils'
-import { Utils } from './utils'
+import { Utilities } from './utilities'
 import fs from 'node:fs'
 
 export class EventHandler {
   private client: Client
-  private config: Configuration
+  private config: Config
 
-  constructor(client: Client, config: Configuration) {
+  constructor(client: Client, config: Config) {
     this.client = client
     this.config = config
   }
@@ -52,11 +52,11 @@ export class EventHandler {
 
     // メッセージがpartialの場合は詳細を取得
     if (message.partial) {
-      const messageTemp = await message.fetch()
-      if (!messageTemp.inGuild()) {
+      const messageTemporary = await message.fetch()
+      if (!messageTemporary.inGuild()) {
         return
       }
-      message = messageTemp
+      message = messageTemporary
     }
     // チャンネルがテキストベースのチャンネルかつ、Guildチャンネルでない場合は無視
     if (!message.channel.isTextBased() || !message.inGuild()) {
@@ -94,8 +94,8 @@ export class EventHandler {
     const toLanguage = config.get('translate').toLanguage
 
     // メッセージを翻訳
-    const escapedText = Utils.escape(message.content)
-    const translatedMessage = await Utils.translate(
+    const escapedText = Utilities.escape(message.content)
+    const translatedMessage = await Utilities.translate(
       translateGasUrl,
       escapedText,
       fromLanguage,
@@ -105,7 +105,7 @@ export class EventHandler {
       logger.warn('❌ Failed to translate message')
       return
     }
-    const unescapedText = Utils.unescape(translatedMessage)
+    const unescapedText = Utilities.unescape(translatedMessage)
 
     // 翻訳前と翻訳後のメッセージが同じ場合は無視
     if (message.content === unescapedText) {
@@ -122,7 +122,7 @@ export class EventHandler {
 
     // 翻訳後のテキストが1900文字以上の場合は、1900文字を超える行から分割して送信
     // すでに送信したことがある場合は、メッセージを編集。ない場合は、メッセージを送信
-    const chunks = Utils.chunkedText(unescapedText, 1900)
+    const chunks = Utilities.chunkedText(unescapedText, 1900)
     const replies = await this.getReplies(message)
     const isRefreshed = await this.deleteMessagesIfAlreadyDeleted(replies)
     if (isRefreshed) {
@@ -140,15 +140,19 @@ export class EventHandler {
     this.saveReplies(message, newMessages)
 
     // 不要なメッセージを削除
-    const deleteMessages = replies.filter(
+    const messagesToDelete = replies.filter(
       (reply) =>
-        reply && !newMessages.some((message) => message.id === reply.id)
+        reply && newMessages.every((message) => message.id !== reply.id)
     )
-    const deletePromises = deleteMessages.map(async (reply) => {
+    const deletionPromises = messagesToDelete.map(async (reply) => {
       if (!reply) return
-      return await reply.delete().catch(() => null)
+      try {
+        return await reply.delete()
+      } catch {
+        return null
+      }
     })
-    await Promise.all(deletePromises)
+    await Promise.all(deletionPromises)
   }
 
   /**
@@ -173,7 +177,11 @@ export class EventHandler {
 
     const replyIds = data[message.id] ?? []
     const replyPromises = replyIds.map(async (id: string) => {
-      return await message.channel.messages.fetch(id).catch(() => null)
+      try {
+        return await message.channel.messages.fetch(id)
+      } catch {
+        return null
+      }
     })
     return Promise.all(replyPromises)
   }
@@ -206,7 +214,7 @@ export class EventHandler {
     messages: (Message<true> | null)[]
   ) {
     // 一つでもメッセージが存在しなかったら、すべてのメッセージを削除する
-    if (!messages.some((message) => !message)) {
+    if (messages.every(Boolean)) {
       return false
     }
 

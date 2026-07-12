@@ -1,15 +1,15 @@
 import { Client, GatewayIntentBits, Partials } from 'discord.js'
 import { Logger } from '@book000/node-utils'
-import { Configuration } from './config'
+import { Config } from './config'
 import { EventHandler } from './event'
 
 export class Discord {
-  private config: Configuration
+  private config: Config
   public readonly client: Client
 
-  constructor(config: Configuration) {
+  constructor(config: Config) {
     const logger = Logger.configure('Discord.constructor')
-    this.client = new Client({
+    const client = new Client({
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
@@ -17,31 +17,42 @@ export class Discord {
       ],
       partials: [Partials.Message, Partials.Channel, Partials.User],
     })
-    this.client.on('ready', this.onReady.bind(this))
+    this.client = client
+    client.on('ready', this.onReady.bind(this))
 
-    const eventHandler = new EventHandler(this.client, config)
-    this.client.on('messageCreate', (message) => {
+    const eventHandler = new EventHandler(client, config)
+    client.on('messageCreate', (message) => {
       if (!message.inGuild()) {
         return
       }
-      eventHandler.onMessageCreate(message).catch((error: unknown) => {
-        logger.error('Failed to process message', error as Error)
-      })
+      ;(async () => {
+        try {
+          await eventHandler.onMessageCreate(message)
+        } catch (error) {
+          logger.error('Failed to process message', error as Error)
+        }
+      })()
     })
-    this.client.on('messageUpdate', (oldMessage, newMessage) => {
+    client.on('messageUpdate', (oldMessage, newMessage) => {
       if (!oldMessage.inGuild() || !newMessage.inGuild()) {
         return
       }
-      eventHandler
-        .onMessageUpdate(oldMessage, newMessage)
-        .catch((error: unknown) => {
+      ;(async () => {
+        try {
+          await eventHandler.onMessageUpdate(oldMessage, newMessage)
+        } catch (error) {
           logger.error('Failed to process message update', error as Error)
-        })
+        }
+      })()
     })
 
-    this.client.login(config.get('discord').token).catch((error: unknown) => {
-      Logger.configure('Discord').error('Failed to login', error as Error)
-    })
+    ;(async () => {
+      try {
+        await client.login(config.get('discord').token)
+      } catch (error) {
+        Logger.configure('Discord').error('Failed to login', error as Error)
+      }
+    })()
 
     this.config = config
   }
