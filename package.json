@@ -50,7 +50,7 @@
     "run-z": "2.1.0",
     "ts-jest": "29.4.11",
     "tsx": "4.23.0",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "typescript-json-schema": "0.67.4"
   },
   "jest": {
