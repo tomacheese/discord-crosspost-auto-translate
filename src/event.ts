@@ -145,8 +145,7 @@ export class EventHandler {
         reply && newMessages.every((message) => message.id !== reply.id)
     )
     const deletePromises = deleteMessages.map(async (reply) => {
-      if (!reply) return
-      return await reply.delete().catch(() => null)
+      return reply ? await reply.delete().catch(() => null) : undefined
     })
     await Promise.all(deletePromises)
   }
