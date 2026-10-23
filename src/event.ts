@@ -9,11 +9,13 @@ import {
 import { Configuration } from './config'
 import { Logger } from '@book000/node-utils'
 import { Utils } from './utils'
+import { KeyedLatestQueue } from './keyed-queue'
 import fs from 'node:fs'
 
 export class EventHandler {
   private client: Client
   private config: Configuration
+  private readonly queue = new KeyedLatestQueue()
 
   constructor(client: Client, config: Configuration) {
     this.client = client
@@ -22,15 +24,17 @@ export class EventHandler {
 
   /**
    * メッセージが送信されたときに呼び出されるメソッド。
+   * 同じメッセージに対する処理は直列化される。
    *
    * @param message メッセージ
    */
   public async onMessageCreate(message: Message<true> | PartialMessage) {
-    await this.processMessage(message)
+    await this.queue.run(message.id, () => this.processMessage(message))
   }
 
   /**
    * メッセージが編集されたときに呼び出されるメソッド。
+   * 同じメッセージに対する処理は直列化され、待機中の編集は最新の 1 件に集約される。
    *
    * @param _oldMessage 旧メッセージ
    * @param newMessage 新メッセージ
@@ -39,7 +43,7 @@ export class EventHandler {
     _oldMessage: Message<true> | PartialMessage,
     newMessage: Message<true> | PartialMessage
   ) {
-    await this.processMessage(newMessage)
+    await this.queue.run(newMessage.id, () => this.processMessage(newMessage))
   }
 
   /**
@@ -192,7 +196,10 @@ export class EventHandler {
 
     data[message.id] = replies.map((reply) => reply.id)
 
-    fs.writeFileSync(path, JSON.stringify(data))
+    // 書き込み途中でプロセスが終了しても、replies.json が壊れないようにする
+    const temporaryPath = `${path}.tmp`
+    fs.writeFileSync(temporaryPath, JSON.stringify(data))
+    fs.renameSync(temporaryPath, path)
   }
 
   /**
