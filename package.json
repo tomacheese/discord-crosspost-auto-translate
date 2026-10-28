@@ -35,7 +35,7 @@
     "@book000/eslint-config": "1.16.106",
     "@book000/node-utils": "1.25.179",
     "@types/jest": "30.0.0",
-    "@types/node": "24.19.2",
+    "@types/node": "26.6.5",
     "@vercel/ncc": "0.45.0",
     "discord.js": "14.27.0",
     "eslint": "10.13.0",
