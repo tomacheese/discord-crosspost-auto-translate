@@ -4,6 +4,6 @@ allowBuilds:
   '@parcel/watcher': true
 minimumReleaseAgeExclude:
   - '@book000/*'
-# @discordjs/builders が shapeshift ^4 を固定しているが、v4 の型定義は Node 26 で削除された util.InspectOptionsStylized を参照し型チェックに失敗する。@discordjs/builders が shapeshift 5 に対応したら削除する
+# @discordjs/builders pins shapeshift ^4, whose type definitions reference util.InspectOptionsStylized (removed in Node 26) and fail type checking. Remove this once @discordjs/builders supports shapeshift 5.
 overrides:
   '@sapphire/shapeshift': 5.0.0

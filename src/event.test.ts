@@ -34,10 +34,9 @@ async function flushPromises() {
 }
 
 /**
- * Discord のチャンネルとメッセージのスタブを組み立てる。
+ * Builds stubs for a Discord channel and its messages.
  *
- * @param sendGate `channel.send` が返信を返す前に待つ deferred
- * @returns スタブ一式
+ * @param sendGate Deferred that `channel.send` waits on before returning a reply
  */
 function createEnvironment(sendGate?: Deferred) {
   const replies = new Map<string, ReplyStub>()

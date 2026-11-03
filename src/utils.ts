@@ -8,15 +8,12 @@ interface TranslateResponse {
 
 export const Utils = {
   /**
-   * テキストをエスケープするメソッド。MarkdownおよびDiscordのフォーマットをエスケープします。
-   *
-   * @param text エスケープするテキスト。
-   * @returns エスケープされたテキスト。
+   * Wraps Markdown and Discord formatting in `<span translate="no">` so the translator leaves it untouched.
    */
   escape(text: string): string {
     return (
       text
-        // --- markdownエスケープ ---
+        // --- Markdown escaping ---
         // <https://example.com> -> <span translate="no" data-type="url">https://example.com</span>
         // https://example.com -> <span translate="no" data-type="url">https://example.com</span>
         .replaceAll(
@@ -39,7 +36,7 @@ export const Utils = {
           /(\*{1,2})(\S+?)\1/g,
           '<span translate="no" data-type="strong-or-italic">$1</span>$2<span translate="no" data-type="strong-or-italic">$1</span>'
         )
-        // --- discordエスケープ ---
+        // --- Discord escaping ---
         // <@123456789012345678> -> <span translate="no" data-type="formatting"><@123456789012345678></span>
         // <#123456789012345678> -> <span translate="no" data-type="formatting"><#123456789012345678></span>
         // <@&123456789012345678> -> <span translate="no" data-type="formatting"><@&123456789012345678></span>
@@ -58,10 +55,7 @@ export const Utils = {
     )
   },
   /**
-   * エスケープされたテキストを元に戻すメソッド。MarkdownおよびDiscordのフォーマットを元に戻します。
-   *
-   * @param text - 元に戻すテキスト。
-   * @returns 元に戻されたテキスト。
+   * Reverts the escaping done by {@link Utils.escape}.
    */
   unescape(text: string): string {
     return (
@@ -104,20 +98,19 @@ export const Utils = {
           /<span translate="no" data-type="formatting">(<\d+:\S+>)<\/span>/g,
           '$1'
         )
-        // 各行の前後にスペースがある場合は削除
         .split('\n')
         .map((line) => line.trim())
         .join('\n')
     )
   },
   /**
-   * 指定されたGoogle Apps Script URLを使用して、与えられたメッセージを一つの言語から別の言語に翻訳します。
+   * Translates a message through the Google Apps Script web app.
    *
-   * @param gasUrl 翻訳に使用するGoogle Apps ScriptサービスのURL。
-   * @param message 翻訳対象のテキストメッセージ。
-   * @param before 元の言語の言語コード（デフォルトは英語の 'en'）。
-   * @param after 翻訳後の言語の言語コード（デフォルトは日本語の 'ja'）。
-   * @returns 翻訳されたメッセージ（文字列）。翻訳が失敗した場合は null。
+   * @param gasUrl URL of the deployed Google Apps Script web app
+   * @param message Text to translate
+   * @param before Source language code
+   * @param after Target language code
+   * @returns The translated text, or null if translation failed
    */
   async translate(
     gasUrl: string,
@@ -128,7 +121,6 @@ export const Utils = {
     const logger = Logger.configure('Utils.translate')
 
     try {
-      // Google Apps Scriptサービスに翻訳リクエストを送信
       const res = await fetch(gasUrl, {
         method: 'POST',
         headers: {
@@ -143,41 +135,30 @@ export const Utils = {
         }),
       })
       if (!res.ok) {
-        logger.warn(`❌ メッセージの翻訳に失敗しました：${res.status}`)
+        logger.warn(`❌ Failed to translate message: ${res.status}`)
         return null
       }
       const data = (await res.json()) as TranslateResponse
       return data.response.result
     } catch (error) {
-      logger.warn(
-        `❌ メッセージの翻訳中にエラーが発生しました：${String(error)}`
-      )
+      logger.warn(`❌ Error while translating message: ${String(error)}`)
       return null
     }
   },
   /**
-   * 改行されたテキストを指定された文字数制限内で分割する
+   * Splits text into chunks of at most `limit` characters, breaking on line boundaries
+   * (a single line longer than the limit is split by character count).
    *
-   * @param {string} text 分割対象のテキスト
-   * @param {number} limit 1つのチャンクに含める最大の文字数
-   * @returns 制限内で分割されたテキストの配列
+   * @param limit Maximum number of characters per chunk
    */
   chunkedText(text: string, limit: number): string[] {
-    // テキストを行ごとに分割
     const lines = text.split('\n')
-    // チャンクを格納するための配列
     const chunks: string[] = []
 
-    // 現在のチャンクを表す配列
     const currentChunk: string[] = []
 
-    // 各行に対して、以下の処理を実施
-    // 現在のチャンクの文字数が追加することによって制限を超える場合は、現在のチャンクが空でない場合に限り、現在のチャンクを保存して新しいチャンクを作成
-    // 1行の文字数が制限を超えている場合は、1行を文字数で分割してチャンクに追加
-    // 1行の文字数が制限を超えてはいないが、現在のチャンクの文字数が追加することによって制限を超える場合は、現在のチャンクを保存して新しいチャンクを作成
-    // それ以外の場合は、現在のチャンクに行を追加
     for (const line of lines) {
-      // 現在のチャンクの文字数が追加することによって制限を超える場合は、現在のチャンクが空でない場合に限り、現在のチャンクを保存して新しいチャンクを作成
+      // Adding this line would exceed the limit: flush the current chunk (if non-empty)
       if (
         currentChunk.join('\n').length + line.length > limit &&
         currentChunk.length > 0
@@ -186,7 +167,7 @@ export const Utils = {
         currentChunk.length = 0
       }
 
-      // 1行の文字数が制限を超えている場合は、1行を文字数で分割してチャンクに追加
+      // A line longer than the limit is split by character count
       if (line.length > limit) {
         for (let index = 0; index < line.length; index += limit) {
           chunks.push(line.slice(index, index + limit))
@@ -194,22 +175,19 @@ export const Utils = {
         continue
       }
 
-      // 1行の文字数が制限を超えてはいないが、現在のチャンクの文字数が追加することによって制限を超える場合は、現在のチャンクを保存して新しいチャンクを作成
+      // Defensive re-check; unreachable after the flush above
       if (currentChunk.join('\n').length + line.length > limit) {
         chunks.push(currentChunk.join('\n'))
         currentChunk.length = 0
       }
 
-      // 現在のチャンクに行を追加
       currentChunk.push(line)
     }
 
-    // ループ終了後、最後のチャンクが残っていれば保存
     if (currentChunk.join('\n').length > 0) {
       chunks.push(currentChunk.join('\n'))
     }
 
-    // 分割されたテキストの配列を返す
     return chunks
   },
 }
