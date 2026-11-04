@@ -23,21 +23,16 @@ export class EventHandler {
   }
 
   /**
-   * メッセージが送信されたときに呼び出されるメソッド。
-   * 同じメッセージに対する処理は直列化される。
-   *
-   * @param message メッセージ
+   * Called when a message is created.
+   * Processing of the same message is serialized.
    */
   public async onMessageCreate(message: Message<true> | PartialMessage) {
     await this.queue.run(message.id, () => this.processMessage(message))
   }
 
   /**
-   * メッセージが編集されたときに呼び出されるメソッド。
-   * 同じメッセージに対する処理は直列化され、待機中の編集は最新の 1 件に集約される。
-   *
-   * @param _oldMessage 旧メッセージ
-   * @param newMessage 新メッセージ
+   * Called when a message is edited.
+   * Processing of the same message is serialized, and waiting edits are collapsed into the latest one.
    */
   public async onMessageUpdate(
     _oldMessage: Message<true> | PartialMessage,
@@ -47,14 +42,12 @@ export class EventHandler {
   }
 
   /**
-   * メッセージを処理するメソッド。
-   *
-   * @param message メッセージ
+   * Translates a cross-posted message and replies to it (or updates the existing replies).
    */
   private async processMessage(message: Message<true> | PartialMessage) {
     const logger = Logger.configure('Discord.processMessage')
 
-    // メッセージがpartialの場合は詳細を取得
+    // Fetch the full message if it is partial
     if (message.partial) {
       const messageTemp = await message.fetch()
       if (!messageTemp.inGuild()) {
@@ -62,26 +55,26 @@ export class EventHandler {
       }
       message = messageTemp
     }
-    // チャンネルがテキストベースのチャンネルかつ、Guildチャンネルでない場合は無視
+    // Ignore messages that are not in a guild text-based channel
     if (!message.channel.isTextBased() || !message.inGuild()) {
       return
     }
-    // メッセージがCrosspostされたメッセージでない場合は無視
+    // Ignore messages that are not crossposted
     if (!message.flags.has('IsCrosspost')) {
       return
     }
-    // 自分自身の情報を取得できない場合は無視
+    // Ignore if our own user is unavailable
     const me = this.client.user
     if (!me) {
       logger.warn('❌ Failed to get self user')
       return
     }
-    // メッセージが自分自身のメッセージの場合は無視
+    // Ignore our own messages (avoids reply loops)
     if (message.author.id === me.id) {
       logger.warn('❌ Message is from myself')
       return
     }
-    // そのチャンネルに発言する権限がない場合は無視
+    // Ignore if we cannot send messages in this channel
     const permissions = message.channel.permissionsFor(me)
     if (!permissions) {
       logger.warn('❌ Failed to get my permissions')
@@ -97,7 +90,6 @@ export class EventHandler {
     const fromLanguage = config.get('translate').fromLanguage
     const toLanguage = config.get('translate').toLanguage
 
-    // メッセージを翻訳
     const escapedText = Utils.escape(message.content)
     const translatedMessage = await Utils.translate(
       translateGasUrl,
@@ -111,21 +103,20 @@ export class EventHandler {
     }
     const unescapedText = Utils.unescape(translatedMessage)
 
-    // 翻訳前と翻訳後のメッセージが同じ場合は無視
+    // Ignore if the translation is identical to the original
     if (message.content === unescapedText) {
       logger.warn('❌ Translated message is same as original message')
       return
     }
 
-    // 翻訳後のメッセージを送信
-    // 翻訳後のテキストが空の場合は無視
+    // Ignore if the translated text is empty
     if (unescapedText.trim().length === 0) {
       logger.warn('❌ Translated message is empty')
       return
     }
 
-    // 翻訳後のテキストが1900文字以上の場合は、1900文字を超える行から分割して送信
-    // すでに送信したことがある場合は、メッセージを編集。ない場合は、メッセージを送信
+    // Split long translations into chunks that fit Discord's limit of 2000 characters.
+    // Edit the replies we already sent; send new ones otherwise.
     const chunks = Utils.chunkedText(unescapedText, 1900)
     const replies = await this.getReplies(message)
     const isRefreshed = await this.deleteMessagesIfAlreadyDeleted(replies)
@@ -140,10 +131,9 @@ export class EventHandler {
       chunks
     )
 
-    // リプライを保存
     this.saveReplies(message, newMessages)
 
-    // 不要なメッセージを削除
+    // Delete replies that are no longer needed
     const deleteMessages = replies.filter(
       (reply) =>
         reply && newMessages.every((message) => message.id !== reply.id)
@@ -155,10 +145,9 @@ export class EventHandler {
   }
 
   /**
-   * メッセージに対するリプライを取得する
+   * Fetches the replies we previously sent for a message.
    *
-   * @param message メッセージ
-   * @returns リプライメッセージの配列（削除されている場合は null が配列要素に入る）
+   * @returns Reply messages (an element is null if that reply has been deleted)
    */
   private getReplies(
     message: Message<true>
@@ -166,7 +155,7 @@ export class EventHandler {
     const path = process.env.REPLIES_MESSAGE_PATH ?? 'data/replies.json'
 
     if (!fs.existsSync(path)) {
-      // ファイルが存在しない場合は空の配列を返す
+      // No saved replies yet
       return Promise.resolve([])
     }
 
@@ -182,10 +171,7 @@ export class EventHandler {
   }
 
   /**
-   * メッセージに対するリプライを保存する
-   *
-   * @param message メッセージ
-   * @param replies リプライメッセージの配列
+   * Saves the replies we sent for a message.
    */
   private saveReplies(message: Message<true>, replies: Message<true>[]) {
     const path = process.env.REPLIES_MESSAGE_PATH ?? 'data/replies.json'
@@ -196,22 +182,22 @@ export class EventHandler {
 
     data[message.id] = replies.map((reply) => reply.id)
 
-    // 書き込み途中でプロセスが終了しても、replies.json が壊れないようにする
+    // Write to a temp file and rename so replies.json is not corrupted if the process dies mid-write
     const temporaryPath = `${path}.tmp`
     fs.writeFileSync(temporaryPath, JSON.stringify(data))
     fs.renameSync(temporaryPath, path)
   }
 
   /**
-   * メッセージが一つでも削除されている場合、すべてのメッセージを削除する
+   * Deletes all replies if any of them has already been deleted.
    *
-   * @param channel チャンネル
-   * @param messageIds メッセージID
+   * @param messages Reply messages (null for ones that no longer exist)
+   * @returns true if the replies were deleted and must be recreated
    */
   private async deleteMessagesIfAlreadyDeleted(
     messages: (Message<true> | null)[]
   ) {
-    // 一つでもメッセージが存在しなかったら、すべてのメッセージを削除する
+    // If any reply is missing, delete all of them
     if (messages.every(Boolean)) {
       return false
     }
@@ -230,13 +216,9 @@ export class EventHandler {
   }
 
   /**
-   * メッセージを編集するか、新しいメッセージを送信する
+   * Edits existing replies or sends new ones.
    *
-   * @param channel チャンネル
-   * @param messages メッセージの配列
-   * @param reference 参照するメッセージ
-   * @param contents メッセージの内容の配列
-   * @returns 編集または新規送信されたメッセージの配列
+   * @param messages Existing replies (null for ones that no longer exist)
    */
   private async replaceOrCreateMessage(
     channel: GuildTextBasedChannel,

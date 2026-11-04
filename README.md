@@ -4,25 +4,24 @@ Automatically translates and replies to cross-posted messages.
 
 ## Requirements
 
-- Native Node.js or Docker
-- Google App Script
-  - The script in [gas-script.js](gas-script.js) must be installed and deployed as a web app.
-- Vaild Discord bot & token
+- Node.js or Docker
+- A Google Apps Script web app
+  - [gas-script.js](gas-script.js) must be deployed as a web app (see below).
+- A Discord bot and its token
+  - The bot needs the Message Content intent enabled, and permission to view channels and send messages in the channels it should reply in.
 
 ### Setup gas-script.js
 
-1. Create a Google Apps Script file and write the contents of [gas-script.js](gas-script.js).
-2. Click Deploy -> New deploy and create a new deployment for the web app.  
-   Specify "everyone" as the user who can access.
-3. Copy the URL of the created web app.
+1. Create a Google Apps Script project and paste the contents of [gas-script.js](gas-script.js).
+2. Click Deploy -> New deployment and deploy it as a web app.
+   Set "Who has access" to "Anyone".
+3. Copy the URL of the deployed web app and set it as `translate.gasUrl` in the [configuration](#configuration).
 
 ## Installation
 
-Works in Node.js or Docker Compose environment.
-
 ### Docker Compose (Recommended)
 
-If you want to use Docker Compose, write the following in `compose.yaml`:
+Write the following in `compose.yaml`:
 
 ```yaml
 services:
@@ -36,27 +35,42 @@ services:
     restart: always
 ```
 
-You can then refer to the [configuration section](#configuration) to create a configuration file and then launch it with `docker compose up -d`.
+Create `data/config.json` as described in the [configuration section](#configuration), then start it with `docker compose up -d`.
 
 ### Native Node.js
 
-If running in a Node.js environment, the version specified in [.node-version](.node-version) is recommended.
+Use the Node.js version specified in [.node-version](.node-version) and [pnpm](https://pnpm.io/).
+After creating `data/config.json` as described in the [configuration section](#configuration), run:
 
-Download and extract `discord-crosspost-auto-translate_vX.Y.Z.zip` from the [release page](https://github.com/tomacheese/discord-crosspost-auto-translate/releases) in the latest release.  
-After that, you can start it with `node index.js` after creating a configuration file with reference to [Configuration section](#configuration).
+```bash
+pnpm install
+pnpm start
+```
 
 ## Configuration
 
-The configuration file `data/config.json` is used by default.  
-If the environment variable `CONFIG_FILE` or `CONFIG_PATH` is set, the specified value is taken as the path to the configuration file.
-
-See here for the JSON Schema of the configuration file: [schema/Configuration.json](schema/Configuration.json)
+The configuration file is `data/config.json` by default.
+If the environment variable `CONFIG_PATH` or `CONFIG_FILE` is set, its value is used as the path to the configuration file (the Docker image sets `CONFIG_PATH=/data/config.json`).
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/tomacheese/discord-crosspost-auto-translate/master/schema/Configuration.json"
+  "discord": {
+    "token": "your-discord-bot-token"
+  },
+  "translate": {
+    "gasUrl": "https://script.google.com/macros/s/xxxxxxxx/exec",
+    "fromLanguage": "en",
+    "toLanguage": "ja"
+  }
 }
 ```
+
+- `discord.token` (required): Discord bot token.
+- `translate.gasUrl` (required): URL of the deployed GAS web app.
+- `translate.fromLanguage` (optional, default `en`): Source language code.
+- `translate.toLanguage` (optional, default `ja`): Target language code.
+
+The IDs of the replies the bot has sent are stored in `data/replies.json` (override with the `REPLIES_MESSAGE_PATH` environment variable), so that edited messages update the existing replies.
 
 ## License
 
