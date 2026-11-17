@@ -9,6 +9,7 @@ import {
   PermissionsBitField,
   RESTJSONErrorCodes,
 } from 'discord.js'
+import { Logger } from '@book000/node-utils'
 import { Configuration } from './config'
 import { EventHandler } from './event'
 import { Utils } from './utils'
@@ -50,28 +51,41 @@ async function flushPromises() {
  * Builds stubs for a Discord channel and its messages.
  *
  * @param sendGate Deferred that `channel.send` waits on before returning a reply
+ * @param translation Text returned by the mocked translation
  */
-function createEnvironment(sendGate?: Deferred) {
+function createEnvironment(sendGate?: Deferred, translation = 'こんにちは') {
   const replies = new Map<string, ReplyStub>()
   const translateGates = new Map<string, Deferred>()
+  // Errors that `channel.send` rejects with, keyed by its 1-based call number
+  const sendErrors = new Map<number, Error>()
   let replyCounter = 0
+  let sendCallCounter = 0
+
+  const addReply = (id: string) => {
+    const stub: ReplyStub = {
+      id,
+      edit: jest.fn(() => Promise.resolve(stub)),
+      delete: jest.fn(() => Promise.resolve(stub)),
+    }
+    replies.set(id, stub)
+    return stub
+  }
 
   const channel = {
     isTextBased: () => true,
     permissionsFor: () =>
       new PermissionsBitField(PermissionFlagsBits.SendMessages),
     send: jest.fn(async () => {
+      sendCallCounter++
+      const sendError = sendErrors.get(sendCallCounter)
       if (sendGate) {
         await sendGate.promise
       }
-      replyCounter++
-      const stub: ReplyStub = {
-        id: `reply-${replyCounter}`,
-        edit: jest.fn(() => Promise.resolve(stub)),
-        delete: jest.fn(() => Promise.resolve(stub)),
+      if (sendError) {
+        throw sendError
       }
-      replies.set(stub.id, stub)
-      return stub
+      replyCounter++
+      return addReply(`reply-${replyCounter}`)
     }),
     messages: {
       fetch: jest.fn((id: string) => {
@@ -90,7 +104,7 @@ function createEnvironment(sendGate?: Deferred) {
       if (gate) {
         await gate.promise
       }
-      return 'こんにちは'
+      return translation
     })
 
   const createMessage = (id: string, content = 'hello') =>
@@ -116,12 +130,17 @@ function createEnvironment(sendGate?: Deferred) {
   return {
     channel,
     replies,
+    addReply,
+    sendErrors,
     translate,
     translateGates,
     createMessage,
     handler: new EventHandler(client, config),
   }
 }
+
+// Two lines of 1000 characters do not fit one 1900-character chunk
+const twoChunkTranslation = `${'あ'.repeat(1000)}\n${'い'.repeat(1000)}`
 
 describe('EventHandler', () => {
   let tempDirectory: string
@@ -255,6 +274,122 @@ describe('EventHandler', () => {
       expect(replies.get('reply-1')?.delete).toHaveBeenCalledTimes(1)
       expect(channel.send).toHaveBeenCalledTimes(2)
       expect(readReplies()).toEqual({ 'source-1': ['reply-2'] })
+    })
+  })
+
+  describe('partial failure while replying', () => {
+    const seedReplies = (ids: string[]) => {
+      fs.writeFileSync(repliesPath, JSON.stringify({ 'source-1': ids }))
+    }
+
+    it('should track the sent chunk and reject when another chunk fails to send', async () => {
+      const { handler, sendErrors, createMessage } = createEnvironment(
+        undefined,
+        twoChunkTranslation
+      )
+      const sendError = new Error('send failed')
+      sendErrors.set(2, sendError)
+
+      await expect(
+        handler.onMessageCreate(createMessage('source-1'))
+      ).rejects.toBe(sendError)
+
+      expect(readReplies()).toEqual({ 'source-1': ['reply-1'] })
+    })
+
+    it('should send only the missing chunk when the message is processed again', async () => {
+      const { handler, channel, replies, sendErrors, createMessage } =
+        createEnvironment(undefined, twoChunkTranslation)
+      sendErrors.set(2, new Error('send failed'))
+      await handler.onMessageCreate(createMessage('source-1')).catch(() => null)
+      sendErrors.clear()
+      channel.send.mockClear()
+
+      await handler.onMessageCreate(createMessage('source-1'))
+
+      expect(channel.send).toHaveBeenCalledTimes(1)
+      expect(replies.get('reply-1')?.edit).toHaveBeenCalledTimes(1)
+      expect(readReplies()).toEqual({ 'source-1': ['reply-1', 'reply-2'] })
+      expect(replies.size).toBe(2)
+    })
+
+    it('should not write an entry when every chunk fails to send', async () => {
+      const { handler, sendErrors, createMessage } = createEnvironment(
+        undefined,
+        twoChunkTranslation
+      )
+      const firstError = new Error('first send failed')
+      sendErrors.set(1, firstError)
+      sendErrors.set(2, new Error('second send failed'))
+
+      await expect(
+        handler.onMessageCreate(createMessage('source-1'))
+      ).rejects.toBe(firstError)
+
+      expect(fs.existsSync(repliesPath)).toBe(false)
+    })
+
+    it('should keep tracking an existing reply whose edit fails and delete nothing', async () => {
+      const { handler, addReply, createMessage } = createEnvironment(
+        undefined,
+        twoChunkTranslation
+      )
+      const first = addReply('reply-a')
+      const second = addReply('reply-b')
+      seedReplies(['reply-a', 'reply-b'])
+      const editError = new Error('edit failed')
+      second.edit.mockRejectedValueOnce(editError)
+
+      await expect(
+        handler.onMessageCreate(createMessage('source-1'))
+      ).rejects.toBe(editError)
+
+      expect(readReplies()).toEqual({ 'source-1': ['reply-a', 'reply-b'] })
+      expect(first.edit).toHaveBeenCalledTimes(1)
+      expect(first.delete).not.toHaveBeenCalled()
+      expect(second.delete).not.toHaveBeenCalled()
+    })
+
+    it('should keep tracking surplus replies and delete nothing when an edit fails', async () => {
+      const { handler, addReply, createMessage } = createEnvironment(
+        undefined,
+        twoChunkTranslation
+      )
+      const first = addReply('reply-a')
+      const second = addReply('reply-b')
+      const surplus = addReply('reply-c')
+      seedReplies(['reply-a', 'reply-b', 'reply-c'])
+      const editError = new Error('edit failed')
+      second.edit.mockRejectedValueOnce(editError)
+
+      await expect(
+        handler.onMessageCreate(createMessage('source-1'))
+      ).rejects.toBe(editError)
+
+      expect(readReplies()).toEqual({
+        'source-1': ['reply-a', 'reply-b', 'reply-c'],
+      })
+      for (const reply of [first, second, surplus]) {
+        expect(reply.delete).not.toHaveBeenCalled()
+      }
+    })
+
+    it('should log how many chunks failed', async () => {
+      const warn = jest.fn()
+      jest
+        .spyOn(Logger, 'configure')
+        .mockReturnValue({ warn } as unknown as Logger)
+      const { handler, sendErrors, createMessage } = createEnvironment(
+        undefined,
+        twoChunkTranslation
+      )
+      sendErrors.set(2, new Error('send failed'))
+
+      await handler.onMessageCreate(createMessage('source-1')).catch(() => null)
+
+      expect(warn).toHaveBeenCalledWith(
+        '❌ Failed to send or edit 1 of 2 reply chunks'
+      )
     })
   })
 
