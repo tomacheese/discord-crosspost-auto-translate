@@ -3,9 +3,11 @@ import os from 'node:os'
 import path from 'node:path'
 import {
   Client,
+  DiscordAPIError,
   Message,
   PermissionFlagsBits,
   PermissionsBitField,
+  RESTJSONErrorCodes,
 } from 'discord.js'
 import { Configuration } from './config'
 import { EventHandler } from './event'
@@ -27,6 +29,17 @@ function createDeferred() {
       resolve(undefined)
     },
   }
+}
+
+function createUnknownMessageError() {
+  return new DiscordAPIError(
+    { message: 'Unknown Message', code: RESTJSONErrorCodes.UnknownMessage },
+    RESTJSONErrorCodes.UnknownMessage,
+    404,
+    'GET',
+    '/channels/c/messages/m',
+    {}
+  )
 }
 
 async function flushPromises() {
@@ -65,7 +78,7 @@ function createEnvironment(sendGate?: Deferred) {
         const reply = replies.get(id)
         return reply
           ? Promise.resolve(reply)
-          : Promise.reject(new Error(`Unknown message ${id}`))
+          : Promise.reject(createUnknownMessageError())
       }),
     },
   }
@@ -192,6 +205,56 @@ describe('EventHandler', () => {
       translateGate.resolve()
       await blockedRun
       expect(replies.size).toBe(2)
+    })
+  })
+
+  describe('fetching saved replies', () => {
+    it('should keep existing replies and saved data when a fetch fails transiently', async () => {
+      const { handler, channel, replies, createMessage } = createEnvironment()
+      await handler.onMessageCreate(createMessage('source-1', 'first'))
+      await handler.onMessageCreate(createMessage('source-2', 'second'))
+      channel.send.mockClear()
+      fs.writeFileSync(
+        repliesPath,
+        JSON.stringify({ 'source-1': ['reply-1', 'reply-2'] })
+      )
+      const error = new Error('network down')
+      const fetchExisting = channel.messages.fetch.getMockImplementation()
+      channel.messages.fetch.mockImplementation((id: string) =>
+        id === 'reply-2'
+          ? Promise.reject(error)
+          : (fetchExisting?.(id) ?? Promise.reject(new Error('no stub')))
+      )
+
+      await expect(
+        handler.onMessageUpdate(
+          createMessage('source-1'),
+          createMessage('source-1')
+        )
+      ).rejects.toBe(error)
+
+      expect(replies.get('reply-1')?.delete).not.toHaveBeenCalled()
+      expect(replies.get('reply-1')?.edit).not.toHaveBeenCalled()
+      expect(channel.send).not.toHaveBeenCalled()
+      expect(readReplies()).toEqual({ 'source-1': ['reply-1', 'reply-2'] })
+    })
+
+    it('should recreate all replies when Discord confirms one no longer exists', async () => {
+      const { handler, channel, replies, createMessage } = createEnvironment()
+      await handler.onMessageCreate(createMessage('source-1'))
+      fs.writeFileSync(
+        repliesPath,
+        JSON.stringify({ 'source-1': ['reply-1', 'reply-gone'] })
+      )
+
+      await handler.onMessageUpdate(
+        createMessage('source-1'),
+        createMessage('source-1')
+      )
+
+      expect(replies.get('reply-1')?.delete).toHaveBeenCalledTimes(1)
+      expect(channel.send).toHaveBeenCalledTimes(2)
+      expect(readReplies()).toEqual({ 'source-1': ['reply-2'] })
     })
   })
 
