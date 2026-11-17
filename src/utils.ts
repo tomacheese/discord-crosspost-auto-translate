@@ -1,11 +1,5 @@
 import { Logger } from '@book000/node-utils'
 
-interface TranslateResponse {
-  response: {
-    result: string
-  }
-}
-
 export const Utils = {
   /**
    * Wraps Markdown and Discord formatting in `<span translate="no">` so the translator leaves it untouched.
@@ -138,8 +132,24 @@ export const Utils = {
         logger.warn(`❌ Failed to translate message: ${res.status}`)
         return null
       }
-      const data = (await res.json()) as TranslateResponse
-      return data.response.result
+      const data: unknown = await res.json()
+      if (typeof data !== 'object' || data === null || !('response' in data)) {
+        logger.warn('❌ Invalid translation response')
+        return null
+      }
+      const response = data.response
+      if (
+        typeof response !== 'object' ||
+        response === null ||
+        !('status' in response) ||
+        response.status !== true ||
+        !('result' in response) ||
+        typeof response.result !== 'string'
+      ) {
+        logger.warn('❌ Invalid translation response')
+        return null
+      }
+      return response.result
     } catch (error) {
       logger.warn(`❌ Error while translating message: ${String(error)}`)
       return null
