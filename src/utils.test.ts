@@ -128,6 +128,7 @@ describe('Utils', () => {
         json: () =>
           Promise.resolve({
             response: {
+              status: true,
               result: translatedMessage,
             },
           }),
@@ -146,6 +147,26 @@ describe('Utils', () => {
         ok: false,
         status: 500,
         json: () => Promise.resolve({}),
+      } as unknown as Response)
+
+      const result = await Utils.translate(gasUrl, message)
+      expect(result).toBeNull()
+    })
+
+    it('should return null if GAS reports a translation failure', async () => {
+      const gasUrl = 'https://example.com/translate'
+      const message = 'Hello, world!'
+
+      jest.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            response: {
+              status: false,
+              result: 'Synthetic translation error',
+            },
+          }),
       } as unknown as Response)
 
       const result = await Utils.translate(gasUrl, message)
