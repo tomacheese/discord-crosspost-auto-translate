@@ -1,10 +1,12 @@
 import {
   Client,
+  DiscordAPIError,
   GuildTextBasedChannel,
   Message,
   MessageFlags,
   PartialMessage,
   PermissionFlagsBits,
+  RESTJSONErrorCodes,
 } from 'discord.js'
 import { Configuration } from './config'
 import { Logger } from '@book000/node-utils'
@@ -147,7 +149,8 @@ export class EventHandler {
   /**
    * Fetches the replies we previously sent for a message.
    *
-   * @returns Reply messages (an element is null if that reply has been deleted)
+   * @returns Reply messages (an element is null only if Discord confirmed that reply no longer exists)
+   * @throws Any other fetch failure (network, permission, ...), so existing replies and saved data are kept
    */
   private getReplies(
     message: Message<true>
@@ -165,7 +168,17 @@ export class EventHandler {
 
     const replyIds = data[message.id] ?? []
     const replyPromises = replyIds.map(async (id: string) => {
-      return await message.channel.messages.fetch(id).catch(() => null)
+      try {
+        return await message.channel.messages.fetch(id)
+      } catch (error) {
+        if (
+          error instanceof DiscordAPIError &&
+          error.code === RESTJSONErrorCodes.UnknownMessage
+        ) {
+          return null
+        }
+        throw error
+      }
     })
     return Promise.all(replyPromises)
   }
