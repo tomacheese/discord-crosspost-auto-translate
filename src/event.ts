@@ -126,12 +126,28 @@ export class EventHandler {
       replies.length = 0
     }
 
-    const newMessages = await this.replaceOrCreateMessage(
-      message.channel,
-      replies,
-      message,
-      chunks
-    )
+    const { messages: newMessages, failures } =
+      await this.replaceOrCreateMessage(
+        message.channel,
+        replies,
+        message,
+        chunks
+      )
+
+    if (failures.length > 0) {
+      logger.warn(
+        `❌ Failed to send or edit ${failures.length} of ${chunks.length} reply chunks`
+      )
+      // Keep the surplus replies tracked: they are not deleted while this run is failing
+      const surplusReplies = replies
+        .slice(chunks.length)
+        .filter((reply) => reply !== null)
+      const trackedReplies = [...newMessages, ...surplusReplies]
+      if (trackedReplies.length > 0) {
+        this.saveReplies(message, trackedReplies)
+      }
+      throw failures[0]
+    }
 
     this.saveReplies(message, newMessages)
 
@@ -230,15 +246,19 @@ export class EventHandler {
 
   /**
    * Edits existing replies or sends new ones.
+   * A failing chunk does not discard the others, so the caller can track them.
    *
    * @param messages Existing replies (null for ones that no longer exist)
+   * @returns The replies to track in chunk order (an existing reply stays in
+   *   place when its edit fails; a chunk whose send fails has none) and the
+   *   rejection reasons in chunk order (empty when every chunk succeeded)
    */
   private async replaceOrCreateMessage(
     channel: GuildTextBasedChannel,
     messages: (Message<true> | null)[],
     reference: Message<true>,
     contents: string[]
-  ): Promise<Message<true>[]> {
+  ): Promise<{ messages: Message<true>[]; failures: unknown[] }> {
     const promises: Promise<Message<true>>[] = []
     for (const [index, content] of contents.entries()) {
       const message = messages.length > index ? messages[index] : null
@@ -263,6 +283,21 @@ export class EventHandler {
         )
       }
     }
-    return await Promise.all(promises)
+    const results = await Promise.allSettled(promises)
+
+    const tracked: Message<true>[] = []
+    const failures: unknown[] = []
+    for (const [index, result] of results.entries()) {
+      if (result.status === 'fulfilled') {
+        tracked.push(result.value)
+        continue
+      }
+      failures.push(result.reason)
+      const existing = index < messages.length ? messages[index] : null
+      if (existing) {
+        tracked.push(existing)
+      }
+    }
+    return { messages: tracked, failures }
   }
 }
