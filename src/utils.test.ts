@@ -191,6 +191,23 @@ describe('Utils', () => {
   })
 
   describe('chunkedText', () => {
+    it('counts the separating newline at the chunk limit', () => {
+      const first = 'a'.repeat(950)
+      const fits = 'b'.repeat(949)
+      const exceeds = 'b'.repeat(950)
+
+      expect(Utils.chunkedText(`${first}\n${fits}`, 1900)).toEqual([
+        `${first}\n${fits}`,
+      ])
+      expect(Utils.chunkedText(`${first}\n${exceeds}`, 1900)).toEqual([
+        first,
+        exceeds,
+      ])
+      expect(Utils.chunkedText('a'.repeat(1900), 1900)).toEqual([
+        'a'.repeat(1900),
+      ])
+    })
+
     it('should return the text if it is shorter than the chunk size', () => {
       const texts = [
         'Lorem ipsum dolor sit amet,',
