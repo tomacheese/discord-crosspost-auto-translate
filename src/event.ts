@@ -121,8 +121,9 @@ export class EventHandler {
     // Edit the replies we already sent; send new ones otherwise.
     const chunks = Utils.chunkedText(unescapedText, 1900)
     const replies = await this.getReplies(message)
-    const isRefreshed = await this.deleteMessagesIfAlreadyDeleted(replies)
-    if (isRefreshed) {
+    const { refreshed, retained } =
+      await this.deleteMessagesIfAlreadyDeleted(replies)
+    if (refreshed) {
       replies.length = 0
     }
 
@@ -142,24 +143,21 @@ export class EventHandler {
       const surplusReplies = replies
         .slice(chunks.length)
         .filter((reply) => reply !== null)
-      const trackedReplies = [...newMessages, ...surplusReplies]
+      const trackedReplies = [...newMessages, ...surplusReplies, ...retained]
       if (trackedReplies.length > 0) {
         this.saveReplies(message, trackedReplies)
       }
       throw failures[0]
     }
 
-    this.saveReplies(message, newMessages)
-
-    // Delete replies that are no longer needed
-    const deleteMessages = replies.filter(
-      (reply) =>
-        reply && newMessages.every((message) => message.id !== reply.id)
+    // Save after deleting so a reply that could not be deleted stays tracked for a retry
+    const retainedSurplus = await this.deleteReplies(
+      replies.filter(
+        (reply) =>
+          reply && newMessages.every((message) => message.id !== reply.id)
+      )
     )
-    const deletePromises = deleteMessages.map(async (reply) => {
-      return reply ? await reply.delete().catch(() => null) : undefined
-    })
-    await Promise.all(deletePromises)
+    this.saveReplies(message, [...newMessages, ...retainedSurplus, ...retained])
   }
 
   /**
@@ -221,27 +219,46 @@ export class EventHandler {
    * Deletes all replies if any of them has already been deleted.
    *
    * @param messages Reply messages (null for ones that no longer exist)
-   * @returns true if the replies were deleted and must be recreated
+   * @returns `refreshed` is true if the replies must be recreated; `retained`
+   *   holds the replies whose deletion failed and that must stay tracked
    */
   private async deleteMessagesIfAlreadyDeleted(
     messages: (Message<true> | null)[]
-  ) {
+  ): Promise<{ refreshed: boolean; retained: Message<true>[] }> {
     // If any reply is missing, delete all of them
-    if (messages.every(Boolean)) {
-      return false
-    }
+    return messages.every(Boolean) ? { refreshed: false, retained: [] } : { refreshed: true, retained: await this.deleteReplies(messages) };
+  }
 
-    await Promise.all(
-      messages.map(async (message) => {
-        if (!message) return
-        try {
-          return await message.delete()
-        } catch {
-          return null
-        }
-      })
+  /**
+   * Deletes replies without ever rejecting.
+   *
+   * @param messages Reply messages (null entries are skipped)
+   * @returns The replies whose deletion failed for a reason other than the
+   *   reply already being gone; callers must keep tracking them for a retry
+   */
+  private async deleteReplies(
+    messages: (Message<true> | null)[]
+  ): Promise<Message<true>[]> {
+    const logger = Logger.configure('Discord.deleteReplies')
+    const existing = messages.filter((message) => message !== null)
+    const results = await Promise.allSettled(
+      existing.map((message) => message.delete())
     )
-    return true
+
+    const retained: Message<true>[] = []
+    for (const [index, result] of results.entries()) {
+      if (result.status === 'fulfilled') continue
+      const reason: unknown = result.reason
+      if (
+        reason instanceof DiscordAPIError &&
+        reason.code === RESTJSONErrorCodes.UnknownMessage
+      ) {
+        continue
+      }
+      logger.warn(`❌ Failed to delete reply ${existing[index].id}`)
+      retained.push(existing[index])
+    }
+    return retained
   }
 
   /**

@@ -393,6 +393,91 @@ describe('EventHandler', () => {
     })
   })
 
+  describe('deleting replies', () => {
+    const seedReplies = (ids: string[]) => {
+      fs.writeFileSync(repliesPath, JSON.stringify({ 'source-1': ids }))
+    }
+
+    describe('surplus replies after an edit', () => {
+      const setup = () => {
+        const environment = createEnvironment()
+        environment.addReply('reply-a')
+        const surplus = environment.addReply('reply-b')
+        seedReplies(['reply-a', 'reply-b'])
+        return { ...environment, surplus }
+      }
+
+      it('should keep tracking a surplus reply whose deletion fails', async () => {
+        const { handler, createMessage, surplus } = setup()
+        surplus.delete.mockRejectedValueOnce(new Error('delete failed'))
+
+        await handler.onMessageCreate(createMessage('source-1'))
+
+        expect(surplus.delete).toHaveBeenCalledTimes(1)
+        expect(readReplies()).toEqual({ 'source-1': ['reply-a', 'reply-b'] })
+      })
+
+      it('should stop tracking a surplus reply that no longer exists', async () => {
+        const { handler, createMessage, surplus } = setup()
+        surplus.delete.mockRejectedValueOnce(createUnknownMessageError())
+
+        await handler.onMessageCreate(createMessage('source-1'))
+
+        expect(readReplies()).toEqual({ 'source-1': ['reply-a'] })
+      })
+
+      it('should stop tracking a surplus reply that is deleted', async () => {
+        const { handler, createMessage, surplus } = setup()
+
+        await handler.onMessageCreate(createMessage('source-1'))
+
+        expect(surplus.delete).toHaveBeenCalledTimes(1)
+        expect(readReplies()).toEqual({ 'source-1': ['reply-a'] })
+      })
+    })
+
+    describe('replies recreated because one no longer exists', () => {
+      const setup = (translation?: string) => {
+        const environment = createEnvironment(undefined, translation)
+        const survivor = environment.addReply('reply-b')
+        seedReplies(['reply-a', 'reply-b'])
+        return { ...environment, survivor }
+      }
+
+      it('should keep tracking a remaining reply whose deletion fails', async () => {
+        const { handler, createMessage, survivor } = setup()
+        survivor.delete.mockRejectedValueOnce(new Error('delete failed'))
+
+        await handler.onMessageCreate(createMessage('source-1'))
+
+        expect(readReplies()).toEqual({ 'source-1': ['reply-1', 'reply-b'] })
+      })
+
+      it('should stop tracking a remaining reply that no longer exists', async () => {
+        const { handler, createMessage, survivor } = setup()
+        survivor.delete.mockRejectedValueOnce(createUnknownMessageError())
+
+        await handler.onMessageCreate(createMessage('source-1'))
+
+        expect(readReplies()).toEqual({ 'source-1': ['reply-1'] })
+      })
+
+      it('should keep tracking a remaining reply whose deletion fails when a chunk fails to send', async () => {
+        const { handler, createMessage, survivor, sendErrors } =
+          setup(twoChunkTranslation)
+        survivor.delete.mockRejectedValueOnce(new Error('delete failed'))
+        const sendError = new Error('send failed')
+        sendErrors.set(1, sendError)
+
+        await expect(
+          handler.onMessageCreate(createMessage('source-1'))
+        ).rejects.toBe(sendError)
+
+        expect(readReplies()).toEqual({ 'source-1': ['reply-1', 'reply-b'] })
+      })
+    })
+  })
+
   describe('saving replies', () => {
     it('should write to a temporary file and rename it over the replies file', async () => {
       const { handler, createMessage } = createEnvironment()
