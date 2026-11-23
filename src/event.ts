@@ -108,12 +108,14 @@ export class EventHandler {
     // Ignore if the translation is identical to the original
     if (message.content === unescapedText) {
       logger.warn('❌ Translated message is same as original message')
+      await this.removeObsoleteReplies(message)
       return
     }
 
     // Ignore if the translated text is empty
     if (unescapedText.trim().length === 0) {
       logger.warn('❌ Translated message is empty')
+      await this.removeObsoleteReplies(message)
       return
     }
 
@@ -158,6 +160,20 @@ export class EventHandler {
       )
     )
     this.saveReplies(message, [...newMessages, ...retainedSurplus, ...retained])
+  }
+
+  /**
+   * Deletes the replies sent earlier for a message whose translation is no longer needed.
+   * A reply whose deletion fails stays tracked so that a later event retries it.
+   */
+  private async removeObsoleteReplies(message: Message<true>) {
+    const replies = await this.getReplies(message)
+    if (replies.length === 0) {
+      return
+    }
+
+    const retained = await this.deleteReplies(replies)
+    this.saveReplies(message, retained)
   }
 
   /**
@@ -207,7 +223,11 @@ export class EventHandler {
       ? JSON.parse(fs.readFileSync(path, 'utf8'))
       : {}
 
-    data[message.id] = replies.map((reply) => reply.id)
+    if (replies.length === 0) {
+      Reflect.deleteProperty(data, message.id)
+    } else {
+      data[message.id] = replies.map((reply) => reply.id)
+    }
 
     // Write to a temp file and rename so replies.json is not corrupted if the process dies mid-write
     const temporaryPath = `${path}.tmp`
