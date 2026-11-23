@@ -60,11 +60,6 @@ export const Utils = {
           /<span translate="no" data-type="url">([\S\s]+?)<\/span>/g,
           '<$1>'
         )
-        // <span translate="no" data-type="code-block">console.log("Hello, world!");</span> -> ```console.log("Hello, world!");```
-        .replaceAll(
-          /<span translate="no" data-type="code-block">([\S\s]+?)<\/span>/g,
-          '```$1```'
-        )
         // <span translate="no" data-type="code">escape</span> -> `escape`
         .replaceAll(
           /<span translate="no" data-type="code">([\S\s]+?)<\/span>/g,
@@ -92,9 +87,14 @@ export const Utils = {
           /<span translate="no" data-type="formatting">(<\d+:\S+>)<\/span>/g,
           '$1'
         )
-        .split('\n')
-        .map((line) => line.trim())
-        .join('\n')
+        .replaceAll(
+          /<span translate="no" data-type="code-block">[\S\s]+?<\/span>|^[^\S\n]+|[^\S\n]+$/gm,
+          (match) => (match.startsWith('<span') ? match : '')
+        )
+        .replaceAll(
+          /<span translate="no" data-type="code-block">([\S\s]+?)<\/span>/g,
+          '```$1```'
+        )
     )
   },
   /**
