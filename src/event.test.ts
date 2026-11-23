@@ -478,6 +478,142 @@ describe('EventHandler', () => {
     })
   })
 
+  describe('edit that no longer needs a translation', () => {
+    const createTwoReplies = async () => {
+      const environment = createEnvironment(undefined, twoChunkTranslation)
+      await environment.handler.onMessageCreate(
+        environment.createMessage('source-1')
+      )
+      environment.channel.send.mockClear()
+      return environment
+    }
+
+    const edit = (
+      environment: ReturnType<typeof createEnvironment>,
+      content = 'hello'
+    ) =>
+      environment.handler.onMessageUpdate(
+        environment.createMessage('source-1', content),
+        environment.createMessage('source-1', content)
+      )
+
+    it('should delete the replies and forget them when the translation equals the original', async () => {
+      const environment = await createTwoReplies()
+      environment.translate.mockResolvedValue('hello')
+
+      await edit(environment)
+
+      expect(environment.replies.get('reply-1')?.delete).toHaveBeenCalledTimes(
+        1
+      )
+      expect(environment.replies.get('reply-2')?.delete).toHaveBeenCalledTimes(
+        1
+      )
+      expect(environment.channel.send).not.toHaveBeenCalled()
+      expect(readReplies()).toEqual({})
+    })
+
+    it('should delete the replies when the translation is whitespace only', async () => {
+      const environment = await createTwoReplies()
+      environment.translate.mockResolvedValue(' \n')
+
+      await edit(environment)
+
+      expect(environment.replies.get('reply-1')?.delete).toHaveBeenCalledTimes(
+        1
+      )
+      expect(environment.replies.get('reply-2')?.delete).toHaveBeenCalledTimes(
+        1
+      )
+      expect(readReplies()).toEqual({})
+    })
+
+    it('should keep the entries of other messages', async () => {
+      const environment = await createTwoReplies()
+      fs.writeFileSync(
+        repliesPath,
+        JSON.stringify({
+          other: ['reply-x'],
+          'source-1': ['reply-1', 'reply-2'],
+        })
+      )
+      environment.translate.mockResolvedValue('hello')
+
+      await edit(environment)
+
+      expect(readReplies()).toEqual({ other: ['reply-x'] })
+    })
+
+    it('should keep the replies when the translation fails', async () => {
+      const environment = await createTwoReplies()
+      environment.translate.mockResolvedValue(null)
+
+      await edit(environment)
+
+      expect(environment.replies.get('reply-1')?.delete).not.toHaveBeenCalled()
+      expect(environment.replies.get('reply-2')?.delete).not.toHaveBeenCalled()
+      expect(readReplies()).toEqual({ 'source-1': ['reply-1', 'reply-2'] })
+    })
+
+    it('should keep tracking a reply whose deletion fails', async () => {
+      const environment = await createTwoReplies()
+      environment.translate.mockResolvedValue('hello')
+      environment.replies
+        .get('reply-2')
+        ?.delete.mockRejectedValueOnce(new Error('delete failed'))
+
+      await edit(environment)
+
+      expect(environment.replies.get('reply-1')?.delete).toHaveBeenCalledTimes(
+        1
+      )
+      expect(readReplies()).toEqual({ 'source-1': ['reply-2'] })
+    })
+
+    it('should forget a reply that Discord confirms no longer exists', async () => {
+      const environment = await createTwoReplies()
+      environment.translate.mockResolvedValue('hello')
+      fs.writeFileSync(
+        repliesPath,
+        JSON.stringify({ 'source-1': ['reply-1', 'reply-gone'] })
+      )
+
+      await edit(environment)
+
+      expect(environment.replies.get('reply-1')?.delete).toHaveBeenCalledTimes(
+        1
+      )
+      expect(readReplies()).toEqual({})
+    })
+
+    it('should forget a reply whose deletion reports it no longer exists', async () => {
+      const environment = await createTwoReplies()
+      environment.translate.mockResolvedValue('hello')
+      environment.replies
+        .get('reply-1')
+        ?.delete.mockRejectedValueOnce(createUnknownMessageError())
+
+      await edit(environment)
+
+      expect(environment.replies.get('reply-2')?.delete).toHaveBeenCalledTimes(
+        1
+      )
+      expect(readReplies()).toEqual({})
+    })
+
+    it('should not create the replies file when there is nothing to clean up', async () => {
+      const { handler, channel, createMessage } = createEnvironment(
+        undefined,
+        'hello'
+      )
+
+      await handler.onMessageCreate(createMessage('source-1'))
+
+      expect(channel.send).not.toHaveBeenCalled()
+      expect(fs.existsSync(repliesPath)).toBe(false)
+    })
+  })
+
   describe('saving replies', () => {
     it('should write to a temporary file and rename it over the replies file', async () => {
       const { handler, createMessage } = createEnvironment()
