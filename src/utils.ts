@@ -170,7 +170,7 @@ export const Utils = {
     for (const line of lines) {
       // Adding this line would exceed the limit: flush the current chunk (if non-empty)
       if (
-        currentChunk.join('\n').length + line.length > limit &&
+        currentChunk.join('\n').length + 1 + line.length > limit &&
         currentChunk.length > 0
       ) {
         chunks.push(currentChunk.join('\n'))
