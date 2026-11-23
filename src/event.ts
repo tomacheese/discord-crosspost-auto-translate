@@ -226,7 +226,9 @@ export class EventHandler {
     messages: (Message<true> | null)[]
   ): Promise<{ refreshed: boolean; retained: Message<true>[] }> {
     // If any reply is missing, delete all of them
-    return messages.every(Boolean) ? { refreshed: false, retained: [] } : { refreshed: true, retained: await this.deleteReplies(messages) };
+    return messages.every(Boolean)
+      ? { refreshed: false, retained: [] }
+      : { refreshed: true, retained: await this.deleteReplies(messages) }
   }
 
   /**
