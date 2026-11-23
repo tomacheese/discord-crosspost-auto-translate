@@ -74,6 +74,22 @@ describe('Utils', () => {
       expect(unescapedText).toBe('```console.log("Hello, world!");```')
     })
 
+    it.each([
+      'Example:\n```python\nif True:\n    print("hello")\n```\nend',
+      '```\n  a\n    b\n```',
+      '```\n\tindented  \n  \n```\n```\n  second\n```',
+      '```\n  *bold*\n    indent\n```',
+    ])('should preserve whitespace in code blocks: %s', (text) => {
+      expect(Utils.unescape(Utils.escape(text))).toBe(text)
+    })
+
+    it('should trim lines outside code blocks', () => {
+      const text = '  before  \n  ```\n  code  \n```  \n  after  '
+      expect(Utils.unescape(Utils.escape(text))).toBe(
+        'before\n```\n  code  \n```\nafter'
+      )
+    })
+
     it('should unescape inline code', () => {
       const text = '<span translate="no" data-type="code">escape</span>'
       const unescapedText = Utils.unescape(text)
